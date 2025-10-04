@@ -55,6 +55,12 @@ export interface PickupStats {
   cancelled: number;
 }
 
+export interface MessengerAvailability {
+  messengerId: string;
+  isAvailable: boolean;
+  updatedAt: string;
+}
+
 export const ZONE_LABELS: Record<Zone, string> = {
   zona_1: 'Zona 1',
   zona_2: 'Zona 2',

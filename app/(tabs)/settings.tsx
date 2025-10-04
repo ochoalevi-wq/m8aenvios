@@ -1,12 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal } from 'react-native';
-import { useAuth, UserRole, Credential } from '@/contexts/AuthContext';
+import { useAuth, UserRole, Credential, useMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 
 export default function SettingsScreen() {
-  const { user, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential } = useAuth();
+  const { user, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability } = useAuth();
+  const messengers = useMessengers();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
   const [formUsername, setFormUsername] = useState<string>('');
@@ -15,6 +16,10 @@ export default function SettingsScreen() {
   const [formFirstName, setFormFirstName] = useState<string>('');
   const [formLastName, setFormLastName] = useState<string>('');
   const [formPhoneNumber, setFormPhoneNumber] = useState<string>('');
+
+  const isAdmin = user?.role === 'admin';
+  const isMessenger = user?.role === 'messenger';
+  const currentMessenger = isMessenger ? messengers.find(m => m.id === user?.id) : null;
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -156,7 +161,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={styles.userAvatar}>
@@ -170,6 +175,52 @@ export default function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      {isMessenger && currentMessenger && (
+        <View style={styles.availabilityCard}>
+          <View style={styles.availabilityHeader}>
+            <View style={styles.availabilityIconContainer}>
+              <UserIcon color={Colors.light.primary} size={24} />
+            </View>
+            <View style={styles.availabilityInfo}>
+              <Text style={styles.availabilityTitle}>Estado de Disponibilidad</Text>
+              <Text style={styles.availabilitySubtitle}>
+                {currentMessenger.isAvailable 
+                  ? 'Estás disponible para recibir asignaciones' 
+                  : 'No estás disponible para recibir asignaciones'}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.availabilityToggle,
+              currentMessenger.isAvailable && styles.availabilityToggleActive,
+            ]}
+            onPress={() => toggleAvailability(user!.id)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.availabilityToggleThumb,
+              currentMessenger.isAvailable && styles.availabilityToggleThumbActive,
+            ]} />
+          </TouchableOpacity>
+          <View style={[
+            styles.availabilityStatus,
+            currentMessenger.isAvailable && styles.availabilityStatusActive,
+          ]}>
+            <View style={[
+              styles.availabilityStatusDot,
+              currentMessenger.isAvailable && styles.availabilityStatusDotActive,
+            ]} />
+            <Text style={[
+              styles.availabilityStatusText,
+              currentMessenger.isAvailable && styles.availabilityStatusTextActive,
+            ]}>
+              {currentMessenger.isAvailable ? 'Disponible' : 'No Disponible'}
+            </Text>
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Logo de la Empresa</Text>
@@ -215,7 +266,7 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      {user?.role === 'admin' && (
+      {isAdmin && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Gestión de Usuarios</Text>
@@ -478,6 +529,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+  },
+  contentContainer: {
+    paddingBottom: 40,
   },
   header: {
     backgroundColor: Colors.light.card,
@@ -797,5 +851,101 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: '#FFFFFF',
+  },
+  availabilityCard: {
+    backgroundColor: Colors.light.card,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  availabilityHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 16,
+    marginBottom: 20,
+  },
+  availabilityIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#DBEAFE',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  availabilityInfo: {
+    flex: 1,
+  },
+  availabilityTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  availabilitySubtitle: {
+    fontSize: 13,
+    color: Colors.light.muted,
+    lineHeight: 18,
+  },
+  availabilityToggle: {
+    width: '100%',
+    height: 56,
+    backgroundColor: Colors.light.border,
+    borderRadius: 28,
+    padding: 4,
+    justifyContent: 'center' as const,
+    marginBottom: 16,
+  },
+  availabilityToggleActive: {
+    backgroundColor: '#10B981',
+  },
+  availabilityToggleThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  availabilityToggleThumbActive: {
+    alignSelf: 'flex-end' as const,
+  },
+  availabilityStatus: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+  },
+  availabilityStatusActive: {
+    backgroundColor: '#D1FAE5',
+  },
+  availabilityStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.light.muted,
+  },
+  availabilityStatusDotActive: {
+    backgroundColor: '#10B981',
+  },
+  availabilityStatusText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.light.muted,
+  },
+  availabilityStatusTextActive: {
+    color: '#10B981',
   },
 });

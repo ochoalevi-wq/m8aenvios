@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 const AUTH_STORAGE_KEY = '@auth_user';
 const LOGO_STORAGE_KEY = '@app_logo';
 const CREDENTIALS_STORAGE_KEY = '@app_credentials';
+const AVAILABILITY_STORAGE_KEY = '@messenger_availability';
 
 export type UserRole = 'admin' | 'messenger' | 'scheduler';
 
@@ -30,11 +31,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [logo, setLogo] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [availability, setAvailability] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadUser();
     loadLogo();
     loadCredentials();
+    loadAvailability();
   }, []);
 
   const loadUser = async () => {
@@ -69,6 +72,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
     } catch (error) {
       console.error('Error loading credentials:', error);
+    }
+  };
+
+  const loadAvailability = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(AVAILABILITY_STORAGE_KEY);
+      if (stored) {
+        setAvailability(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading availability:', error);
     }
   };
 
@@ -197,6 +211,34 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [credentials]);
 
+  const toggleAvailability = useCallback(async (messengerId: string) => {
+    const newAvailability = {
+      ...availability,
+      [messengerId]: !availability[messengerId],
+    };
+    try {
+      await AsyncStorage.setItem(AVAILABILITY_STORAGE_KEY, JSON.stringify(newAvailability));
+      setAvailability(newAvailability);
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      throw error;
+    }
+  }, [availability]);
+
+  const setMessengerAvailability = useCallback(async (messengerId: string, isAvailable: boolean) => {
+    const newAvailability = {
+      ...availability,
+      [messengerId]: isAvailable,
+    };
+    try {
+      await AsyncStorage.setItem(AVAILABILITY_STORAGE_KEY, JSON.stringify(newAvailability));
+      setAvailability(newAvailability);
+    } catch (error) {
+      console.error('Error setting availability:', error);
+      throw error;
+    }
+  }, [availability]);
+
   const hasAdminRegistered = useMemo(() => credentials.length > 0, [credentials]);
 
   return useMemo(() => ({
@@ -213,11 +255,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     addCredential,
     updateCredential,
     deleteCredential,
-  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential]);
+    availability,
+    toggleAvailability,
+    setMessengerAvailability,
+  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential, availability, toggleAvailability, setMessengerAvailability]);
 });
 
 export const useMessengers = () => {
-  const { credentials } = useAuth();
+  const { credentials, availability } = useAuth();
   return useMemo(() => 
     credentials
       .filter(c => c.role === 'messenger')
@@ -225,7 +270,23 @@ export const useMessengers = () => {
         id: c.id,
         name: `${c.firstName} ${c.lastName}`,
         phone: c.phoneNumber,
+        isAvailable: availability[c.id] || false,
       })),
-    [credentials]
+    [credentials, availability]
+  );
+};
+
+export const useAvailableMessengers = () => {
+  const { credentials, availability } = useAuth();
+  return useMemo(() => 
+    credentials
+      .filter(c => c.role === 'messenger' && availability[c.id])
+      .map(c => ({
+        id: c.id,
+        name: `${c.firstName} ${c.lastName}`,
+        phone: c.phoneNumber,
+        isAvailable: true,
+      })),
+    [credentials, availability]
   );
 };

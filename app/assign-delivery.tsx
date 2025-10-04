@@ -1,5 +1,5 @@
 import { useDeliveries } from '@/contexts/DeliveryContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useAvailableMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { ZONE_LABELS } from '@/types/delivery';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -21,7 +21,8 @@ export default function AssignDeliveryScreen() {
   const params = useLocalSearchParams();
   const deliveryId = params.deliveryId as string | undefined;
   const { deliveries, updateDelivery, isLoading } = useDeliveries();
-  const { credentials, user } = useAuth();
+  const { credentials, user, availability } = useAuth();
+  const availableMessengers = useAvailableMessengers();
   const [selectedDelivery, setSelectedDelivery] = useState<string | null>(deliveryId || null);
   const [selectedMessenger, setSelectedMessenger] = useState<string | null>(null);
   const [searchDelivery, setSearchDelivery] = useState<string>('');
@@ -32,10 +33,21 @@ export default function AssignDeliveryScreen() {
   const isReassigning = !!deliveryId;
 
   const messengers = useMemo(() => {
-    return credentials
+    const allMessengers = credentials
       .filter(c => c.role === 'messenger')
-      .map(c => ({ id: c.id, username: c.username, firstName: c.firstName, lastName: c.lastName }));
-  }, [credentials]);
+      .map(c => ({ 
+        id: c.id, 
+        username: c.username, 
+        firstName: c.firstName, 
+        lastName: c.lastName,
+        isAvailable: availability[c.id] || false,
+      }));
+    
+    if (isScheduler) {
+      return allMessengers.filter(m => m.isAvailable);
+    }
+    return allMessengers;
+  }, [credentials, availability, isScheduler]);
 
   const unassignedOrPendingDeliveries = useMemo(() => {
     if (isReassigning) {
@@ -154,12 +166,19 @@ export default function AssignDeliveryScreen() {
   }
 
   if (messengers.length === 0) {
+    const noMessengersText = isScheduler 
+      ? 'No hay mensajeros disponibles en este momento'
+      : 'No hay mensajeros disponibles';
+    const noMessengersSubtext = isScheduler
+      ? 'Los mensajeros deben activar su disponibilidad para recibir asignaciones'
+      : 'Primero debes crear usuarios con rol de mensajero';
+    
     return (
       <View style={styles.errorContainer}>
         <UserCheck color={Colors.light.muted} size={64} />
-        <Text style={styles.errorText}>No hay mensajeros disponibles</Text>
+        <Text style={styles.errorText}>{noMessengersText}</Text>
         <Text style={styles.errorSubtext}>
-          Primero debes crear usuarios con rol de mensajero
+          {noMessengersSubtext}
         </Text>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backButtonText}>Volver</Text>
@@ -312,7 +331,15 @@ export default function AssignDeliveryScreen() {
                       </Text>
                     </View>
                     <View style={styles.messengerInfo}>
-                      <Text style={styles.messengerName}>{displayName}</Text>
+                      <View style={styles.messengerNameRow}>
+                        <Text style={styles.messengerName}>{displayName}</Text>
+                        {messenger.isAvailable && (
+                          <View style={styles.availableBadge}>
+                            <View style={styles.availableDot} />
+                            <Text style={styles.availableText}>Disponible</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.messengerStats}>
                         {activeDeliveries.length} paquetes activos
                       </Text>
@@ -556,6 +583,32 @@ const styles = StyleSheet.create({
   },
   messengerInfo: {
     flex: 1,
+  },
+  messengerNameRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    flexWrap: 'wrap' as const,
+  },
+  availableBadge: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  availableDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  availableText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#10B981',
   },
   messengerName: {
     fontSize: 16,
