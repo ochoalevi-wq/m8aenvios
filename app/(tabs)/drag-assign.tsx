@@ -5,6 +5,7 @@ import Colors from '@/constants/colors';
 import { STATUS_LABELS, PICKUP_STATUS_LABELS, ZONE_LABELS } from '@/types/delivery';
 import type { Delivery, Pickup } from '@/types/delivery';
 import { useState, useMemo, useRef } from 'react';
+import { Modal } from 'react-native';
 import { 
   Package, 
   PackageCheck,
@@ -40,6 +41,8 @@ export default function DragAssignScreen() {
   const [selectedTab, setSelectedTab] = useState<'deliveries' | 'pickups'>('deliveries');
   const [draggedItem, setDraggedItem] = useState<DragItem | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [showMessengerModal, setShowMessengerModal] = useState<boolean>(false);
+  const [selectedItemForAssign, setSelectedItemForAssign] = useState<DragItem | null>(null);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const opacity = useRef(new Animated.Value(1)).current;
@@ -145,6 +148,19 @@ export default function DragAssignScreen() {
     }
   };
 
+  const handleAssignClick = (item: DragItem) => {
+    setSelectedItemForAssign(item);
+    setShowMessengerModal(true);
+  };
+
+  const handleMessengerSelect = async (messengerId: string) => {
+    if (!selectedItemForAssign) return;
+    
+    setShowMessengerModal(false);
+    await handleDrop(messengerId, selectedItemForAssign);
+    setSelectedItemForAssign(null);
+  };
+
   if (deliveriesLoading || pickupsLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -228,7 +244,6 @@ export default function DragAssignScreen() {
                 return (
                   <Animated.View
                     key={item.id}
-                    {...panResponder.panHandlers}
                     style={[
                       styles.draggableItem,
                       {
@@ -240,7 +255,7 @@ export default function DragAssignScreen() {
                       },
                     ]}
                   >
-                    <View style={styles.dragHandle}>
+                    <View {...panResponder.panHandlers} style={styles.dragHandle}>
                       <GripVertical color={Colors.light.muted} size={20} />
                     </View>
                     <View style={styles.itemContent}>
@@ -284,6 +299,16 @@ export default function DragAssignScreen() {
                         )}
                       </View>
                     </View>
+                    <TouchableOpacity 
+                      style={styles.assignButton}
+                      onPress={() => handleAssignClick({
+                        type: itemType,
+                        id: item.id,
+                        data: item,
+                      })}
+                    >
+                      <UserIcon color={Colors.light.primary} size={20} />
+                    </TouchableOpacity>
                   </Animated.View>
                 );
               })}
@@ -346,6 +371,56 @@ export default function DragAssignScreen() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showMessengerModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMessengerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Seleccionar Mensajero</Text>
+              <TouchableOpacity onPress={() => setShowMessengerModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              {messengerCredentials.map((messenger) => {
+                const messengerName = `${messenger.firstName} ${messenger.lastName}`;
+                const messengerDeliveries = deliveries.filter(d => d.messengerId === messenger.id);
+                const messengerPickups = pickups.filter(p => p.messengerId === messenger.id);
+
+                return (
+                  <TouchableOpacity
+                    key={messenger.id}
+                    style={styles.modalMessengerCard}
+                    onPress={() => handleMessengerSelect(messenger.id)}
+                  >
+                    <View style={styles.modalMessengerAvatar}>
+                      <UserIcon color={Colors.light.primary} size={24} />
+                    </View>
+                    <View style={styles.modalMessengerInfo}>
+                      <Text style={styles.modalMessengerName}>{messengerName}</Text>
+                      <Text style={styles.modalMessengerPhone}>+502 {messenger.phoneNumber}</Text>
+                      <View style={styles.modalMessengerStats}>
+                        <Text style={styles.modalMessengerStat}>
+                          {messengerDeliveries.length} paquetes
+                        </Text>
+                        <Text style={styles.modalMessengerStat}> • </Text>
+                        <Text style={styles.modalMessengerStat}>
+                          {messengerPickups.length} recolecciones
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -563,6 +638,87 @@ const styles = StyleSheet.create({
   dropZoneText: {
     fontSize: 13,
     fontWeight: '600' as const,
+    color: Colors.light.muted,
+  },
+  assignButton: {
+    padding: 12,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderLeftWidth: 1,
+    borderLeftColor: Colors.light.border,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end' as const,
+  },
+  modalContent: {
+    backgroundColor: Colors.light.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  modalClose: {
+    fontSize: 24,
+    color: Colors.light.muted,
+    fontWeight: '300' as const,
+  },
+  modalScroll: {
+    padding: 16,
+  },
+  modalMessengerCard: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    padding: 16,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  modalMessengerAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#DBEAFE',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginRight: 12,
+  },
+  modalMessengerInfo: {
+    flex: 1,
+  },
+  modalMessengerName: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  modalMessengerPhone: {
+    fontSize: 13,
+    color: Colors.light.muted,
+    marginBottom: 4,
+  },
+  modalMessengerStats: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+  },
+  modalMessengerStat: {
+    fontSize: 12,
     color: Colors.light.muted,
   },
 });
