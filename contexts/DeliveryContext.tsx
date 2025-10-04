@@ -47,10 +47,14 @@ export const [DeliveryProvider, useDeliveries] = createContextHook(() => {
 
   const updateDelivery = useCallback(async (id: string, updates: Partial<Delivery>) => {
     console.log('Actualizando entrega:', { id, updates });
-    const updated = deliveries.map((d) =>
-      d.id === id ? { ...d, ...updates, updatedAt: new Date().toISOString() } : d
-    );
-    console.log('Entrega actualizada:', updated.find(d => d.id === id));
+    const updated = deliveries.map((d) => {
+      if (d.id === id) {
+        const updatedDelivery = { ...d, ...updates, updatedAt: new Date().toISOString() };
+        console.log('Entrega actualizada:', updatedDelivery);
+        return updatedDelivery;
+      }
+      return d;
+    });
     await saveDeliveries(updated);
   }, [deliveries]);
 

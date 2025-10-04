@@ -23,6 +23,7 @@ export interface Delivery {
   createdAt: string;
   updatedAt: string;
   description?: string;
+  photos?: string[];
 }
 
 export interface DeliveryStats {

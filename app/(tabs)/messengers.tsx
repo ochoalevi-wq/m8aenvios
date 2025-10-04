@@ -19,7 +19,8 @@ import {
   CreditCard,
   Car,
   MessageCircle,
-  Camera
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -31,9 +32,12 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -72,12 +76,16 @@ const LICENSE_LABELS: Record<string, string> = {
 };
 
 export default function MessengersScreen() {
-  const { deliveries, isLoading, updateStatus } = useDeliveries();
+  const { deliveries, isLoading, updateStatus, updateDelivery } = useDeliveries();
   const { user, credentials } = useAuth();
   const router = useRouter();
   const [expandedMessenger, setExpandedMessenger] = useState<string | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | null>(null);
   const [previousDeliveriesCount, setPreviousDeliveriesCount] = useState<number>(0);
+  const [showCamera, setShowCamera] = useState<boolean>(false);
+  const [currentDeliveryId, setCurrentDeliveryId] = useState<string | null>(null);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
 
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
@@ -240,16 +248,122 @@ export default function MessengersScreen() {
     };
 
     const handleTakePhoto = async (deliveryId: string) => {
+      if (Platform.OS === 'web') {
+        Alert.alert(
+          'Cámara no disponible',
+          'La funcionalidad de cámara no está disponible en la versión web. Por favor, usa la aplicación móvil.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       Alert.alert(
-        'Foto del Paquete',
-        'La funcionalidad de cámara estará disponible en la versión móvil de la aplicación.',
-        [{ text: 'OK' }]
+        'Tomar Foto',
+        'Elige una opción',
+        [
+          {
+            text: 'Cámara',
+            onPress: async () => {
+              if (!cameraPermission?.granted) {
+                const { status } = await requestCameraPermission();
+                if (status !== 'granted') {
+                  Alert.alert('Permiso denegado', 'Se necesita permiso para usar la cámara');
+                  return;
+                }
+              }
+              setCurrentDeliveryId(deliveryId);
+              setShowCamera(true);
+            },
+          },
+          {
+            text: 'Galería',
+            onPress: async () => {
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 0.8,
+              });
+
+              if (!result.canceled && result.assets[0]) {
+                const delivery = myDeliveries.find(d => d.id === deliveryId);
+                if (delivery) {
+                  const photos = delivery.photos || [];
+                  await updateDelivery(deliveryId, {
+                    photos: [...photos, result.assets[0].uri],
+                  });
+                  Alert.alert('Éxito', 'Foto agregada correctamente');
+                }
+              }
+            },
+          },
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+        ]
       );
+    };
+
+    const takePicture = async () => {
+      if (cameraRef && currentDeliveryId) {
+        try {
+          const photo = await cameraRef.takePictureAsync({
+            quality: 0.8,
+          });
+
+          if (photo) {
+            const delivery = myDeliveries.find(d => d.id === currentDeliveryId);
+            if (delivery) {
+              const photos = delivery.photos || [];
+              await updateDelivery(currentDeliveryId, {
+                photos: [...photos, photo.uri],
+              });
+              setShowCamera(false);
+              setCurrentDeliveryId(null);
+              Alert.alert('Éxito', 'Foto tomada y guardada correctamente');
+            }
+          }
+        } catch (error) {
+          console.error('Error tomando foto:', error);
+          Alert.alert('Error', 'No se pudo tomar la foto');
+        }
+      }
     };
 
     const handleStatusChange = async (deliveryId: string, newStatus: 'in_transit' | 'delivered') => {
       await updateStatus(deliveryId, newStatus);
     };
+
+    if (showCamera && Platform.OS !== 'web') {
+      return (
+        <View style={styles.cameraContainer}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            ref={(ref) => setCameraRef(ref)}
+          >
+            <View style={styles.cameraControls}>
+              <TouchableOpacity
+                style={styles.cameraCancelButton}
+                onPress={() => {
+                  setShowCamera(false);
+                  setCurrentDeliveryId(null);
+                }}
+              >
+                <Text style={styles.cameraCancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cameraButton}
+                onPress={takePicture}
+              >
+                <View style={styles.cameraButtonInner} />
+              </TouchableOpacity>
+              <View style={{ width: 80 }} />
+            </View>
+          </CameraView>
+        </View>
+      );
+    }
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -425,13 +539,30 @@ export default function MessengersScreen() {
                     </View>
                   </View>
 
+                  {delivery.photos && delivery.photos.length > 0 && (
+                    <View style={styles.deliveryDetailSection}>
+                      <Text style={styles.deliveryDetailSectionTitle}>Fotos del Paquete</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosContainer}>
+                        {delivery.photos.map((photo, index) => (
+                          <Image
+                            key={index}
+                            source={{ uri: photo }}
+                            style={styles.deliveryPhoto}
+                          />
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+
                   <View style={styles.deliveryActions}>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.actionButtonCamera]}
                       onPress={() => handleTakePhoto(delivery.id)}
                     >
                       <Camera color="#FFFFFF" size={20} />
-                      <Text style={styles.actionButtonText}>Tomar Foto</Text>
+                      <Text style={styles.actionButtonText}>
+                        {delivery.photos && delivery.photos.length > 0 ? 'Agregar Foto' : 'Tomar Foto'}
+                      </Text>
                     </TouchableOpacity>
                     {canStartTransit && (
                       <TouchableOpacity
@@ -1281,5 +1412,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     color: '#FFFFFF',
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraControls: {
+    position: 'absolute' as const,
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-around' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 20,
+  },
+  cameraCancelButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    width: 80,
+    alignItems: 'center' as const,
+  },
+  cameraCancelButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  cameraButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  cameraButtonInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+  },
+  photosContainer: {
+    flexDirection: 'row' as const,
+    gap: 8,
+  },
+  deliveryPhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 12,
+    marginRight: 8,
+    backgroundColor: Colors.light.border,
   },
 });
