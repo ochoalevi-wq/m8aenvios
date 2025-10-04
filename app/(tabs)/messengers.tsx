@@ -248,10 +248,10 @@ export default function MessengersScreen() {
                     </View>
                     <View style={styles.deliveryDetailRow}>
                       <Phone color={Colors.light.muted} size={16} />
-                      <Text style={styles.deliveryDetailText}>{delivery.sender.phone}</Text>
+                      <Text style={styles.deliveryDetailText}>+502 {delivery.sender.phone}</Text>
                       <TouchableOpacity
                         style={styles.callButton}
-                        onPress={() => handleCall(delivery.sender.phone)}
+                        onPress={() => handleCall(`+502${delivery.sender.phone}`)}
                       >
                         <Text style={styles.callButtonText}>Llamar</Text>
                       </TouchableOpacity>
@@ -270,10 +270,10 @@ export default function MessengersScreen() {
                     </View>
                     <View style={styles.deliveryDetailRow}>
                       <Phone color={Colors.light.muted} size={16} />
-                      <Text style={styles.deliveryDetailText}>{delivery.receiver.phone}</Text>
+                      <Text style={styles.deliveryDetailText}>+502 {delivery.receiver.phone}</Text>
                       <TouchableOpacity
                         style={styles.callButton}
-                        onPress={() => handleCall(delivery.receiver.phone)}
+                        onPress={() => handleCall(`+502${delivery.receiver.phone}`)}
                       >
                         <Text style={styles.callButtonText}>Llamar</Text>
                       </TouchableOpacity>

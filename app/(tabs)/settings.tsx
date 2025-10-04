@@ -379,14 +379,17 @@ export default function SettingsScreen() {
 
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Número de Teléfono</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="Ingresa el número de teléfono"
-                  value={formPhoneNumber}
-                  onChangeText={setFormPhoneNumber}
-                  keyboardType="phone-pad"
-                  autoCorrect={false}
-                />
+                <View style={styles.phoneInputContainer}>
+                  <Text style={styles.phonePrefix}>+502</Text>
+                  <TextInput
+                    style={styles.phoneInputField}
+                    placeholder="Ingresa el número de teléfono"
+                    value={formPhoneNumber}
+                    onChangeText={setFormPhoneNumber}
+                    keyboardType="phone-pad"
+                    autoCorrect={false}
+                  />
+                </View>
               </View>
 
               <View style={styles.formGroup}>
@@ -947,5 +950,26 @@ const styles = StyleSheet.create({
   },
   availabilityStatusTextActive: {
     color: '#10B981',
+  },
+  phoneInputContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.background,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    borderRadius: 12,
+    paddingLeft: 16,
+  },
+  phonePrefix: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.primary,
+    marginRight: 8,
+  },
+  phoneInputField: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.light.text,
   },
 });

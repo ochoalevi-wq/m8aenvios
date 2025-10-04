@@ -114,14 +114,17 @@ export default function NewDeliveryScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Teléfono</Text>
-            <TextInput
-              style={styles.input}
-              value={senderPhone}
-              onChangeText={setSenderPhone}
-              placeholder="Ej: 5555-5555"
-              keyboardType="phone-pad"
-              placeholderTextColor={Colors.light.muted}
-            />
+            <View style={styles.phoneInputContainer}>
+              <Text style={styles.phonePrefix}>+502</Text>
+              <TextInput
+                style={styles.phoneInput}
+                value={senderPhone}
+                onChangeText={setSenderPhone}
+                placeholder="Ej: 5555-5555"
+                keyboardType="phone-pad"
+                placeholderTextColor={Colors.light.muted}
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -157,14 +160,17 @@ export default function NewDeliveryScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Teléfono</Text>
-            <TextInput
-              style={styles.input}
-              value={receiverPhone}
-              onChangeText={setReceiverPhone}
-              placeholder="Ej: 5555-5555"
-              keyboardType="phone-pad"
-              placeholderTextColor={Colors.light.muted}
-            />
+            <View style={styles.phoneInputContainer}>
+              <Text style={styles.phonePrefix}>+502</Text>
+              <TextInput
+                style={styles.phoneInput}
+                value={receiverPhone}
+                onChangeText={setReceiverPhone}
+                placeholder="Ej: 5555-5555"
+                keyboardType="phone-pad"
+                placeholderTextColor={Colors.light.muted}
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -458,5 +464,26 @@ const styles = StyleSheet.create({
     color: Colors.light.muted,
     marginTop: 6,
     fontStyle: 'italic' as const,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.card,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    paddingLeft: 14,
+  },
+  phonePrefix: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.primary,
+    marginRight: 8,
+  },
+  phoneInput: {
+    flex: 1,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.light.text,
   },
 });

@@ -131,14 +131,17 @@ export default function NewPickupScreen() {
               <Phone color={Colors.light.primary} size={18} />
               <Text style={styles.labelText}>Número de Teléfono</Text>
             </View>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej: 5555-5555"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              placeholderTextColor={Colors.light.muted}
-            />
+            <View style={styles.phoneInputContainer}>
+              <Text style={styles.phonePrefix}>+502</Text>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="Ej: 5555-5555"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                placeholderTextColor={Colors.light.muted}
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -197,7 +200,7 @@ export default function NewPickupScreen() {
                             selectedMessenger === messenger.id && styles.messengerPhoneActive,
                           ]}
                         >
-                          {messenger.phone}
+                          +502 {messenger.phone}
                         </Text>
                       )}
                     </View>
@@ -353,5 +356,26 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700' as const,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    paddingLeft: 12,
+  },
+  phonePrefix: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.primary,
+    marginRight: 8,
+  },
+  phoneInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    color: Colors.light.text,
   },
 });
