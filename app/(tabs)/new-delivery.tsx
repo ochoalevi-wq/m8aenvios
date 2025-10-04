@@ -1,9 +1,10 @@
 import { useDeliveries } from '@/contexts/DeliveryContext';
+import { useAvailableMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { ZONE_LABELS, type Zone } from '@/types/delivery';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Package, User, MapPin, DollarSign, Truck } from 'lucide-react-native';
+import { Package, User, MapPin, DollarSign, Truck, ChevronDown } from 'lucide-react-native';
 import {
   View,
   Text,
@@ -14,11 +15,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 
 export default function NewDeliveryScreen() {
   const router = useRouter();
   const { addDelivery } = useDeliveries();
+  const availableMessengers = useAvailableMessengers();
 
   const [senderName, setSenderName] = useState<string>('');
   const [senderPhone, setSenderPhone] = useState<string>('');
@@ -29,6 +32,7 @@ export default function NewDeliveryScreen() {
   const [receiverAddress, setReceiverAddress] = useState<string>('');
 
   const [messenger, setMessenger] = useState<string>('Sin asignar');
+  const [showMessengerPicker, setShowMessengerPicker] = useState<boolean>(false);
   const [zone, setZone] = useState<Zone>('zona_1');
   const [packageCost, setPackageCost] = useState<string>('');
   const [shippingCost, setShippingCost] = useState<string>('');
@@ -195,18 +199,20 @@ export default function NewDeliveryScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Mensajero (Opcional)</Text>
-            <View style={styles.inputWithIcon}>
+            <TouchableOpacity 
+              style={styles.pickerButton}
+              onPress={() => setShowMessengerPicker(true)}
+            >
               <Truck color={Colors.light.muted} size={20} />
-              <TextInput
-                style={styles.inputWithIconText}
-                value={messenger}
-                onChangeText={setMessenger}
-                placeholder="Sin asignar (se puede asignar después)"
-                placeholderTextColor={Colors.light.muted}
-              />
-            </View>
+              <Text style={[styles.pickerButtonText, messenger === 'Sin asignar' && styles.pickerButtonTextPlaceholder]}>
+                {messenger}
+              </Text>
+              <ChevronDown color={Colors.light.muted} size={20} />
+            </TouchableOpacity>
             <Text style={styles.helperText}>
-              Puedes dejar este campo vacío y asignar el mensajero después
+              {availableMessengers.length > 0 
+                ? 'Selecciona un mensajero disponible o déjalo sin asignar'
+                : 'No hay mensajeros disponibles en este momento'}
             </Text>
           </View>
 
@@ -294,6 +300,79 @@ export default function NewDeliveryScreen() {
           <Text style={styles.submitButtonText}>Crear Envío</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        visible={showMessengerPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMessengerPicker(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMessengerPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Seleccionar Mensajero</Text>
+              <TouchableOpacity onPress={() => setShowMessengerPicker(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.messengerList}>
+              <TouchableOpacity
+                style={[styles.messengerItem, messenger === 'Sin asignar' && styles.messengerItemSelected]}
+                onPress={() => {
+                  setMessenger('Sin asignar');
+                  setShowMessengerPicker(false);
+                }}
+              >
+                <View style={styles.messengerInfo}>
+                  <Text style={[styles.messengerName, messenger === 'Sin asignar' && styles.messengerNameSelected]}>
+                    Sin asignar
+                  </Text>
+                  <Text style={styles.messengerPhone}>Asignar después</Text>
+                </View>
+                {messenger === 'Sin asignar' && (
+                  <View style={styles.selectedBadge}>
+                    <Text style={styles.selectedBadgeText}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {availableMessengers.map((m) => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.messengerItem, messenger === m.name && styles.messengerItemSelected]}
+                  onPress={() => {
+                    setMessenger(m.name);
+                    setShowMessengerPicker(false);
+                  }}
+                >
+                  <View style={styles.messengerInfo}>
+                    <Text style={[styles.messengerName, messenger === m.name && styles.messengerNameSelected]}>
+                      {m.name}
+                    </Text>
+                    <Text style={styles.messengerPhone}>{m.phone}</Text>
+                  </View>
+                  {messenger === m.name && (
+                    <View style={styles.selectedBadge}>
+                      <Text style={styles.selectedBadgeText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+
+              {availableMessengers.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No hay mensajeros disponibles</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -485,5 +564,110 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     color: Colors.light.text,
+  },
+  pickerButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.card,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    gap: 10,
+  },
+  pickerButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  pickerButtonTextPlaceholder: {
+    color: Colors.light.muted,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end' as const,
+  },
+  modalContent: {
+    backgroundColor: Colors.light.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '70%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  modalClose: {
+    fontSize: 24,
+    color: Colors.light.muted,
+    fontWeight: '600' as const,
+  },
+  messengerList: {
+    padding: 16,
+  },
+  messengerItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    padding: 16,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  messengerItemSelected: {
+    borderColor: Colors.light.primary,
+    backgroundColor: Colors.light.card,
+  },
+  messengerInfo: {
+    flex: 1,
+  },
+  messengerName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  messengerNameSelected: {
+    color: Colors.light.primary,
+  },
+  messengerPhone: {
+    fontSize: 14,
+    color: Colors.light.muted,
+  },
+  selectedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.light.primary,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  selectedBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700' as const,
+  },
+  emptyState: {
+    padding: 32,
+    alignItems: 'center' as const,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: Colors.light.muted,
+    textAlign: 'center' as const,
   },
 });
