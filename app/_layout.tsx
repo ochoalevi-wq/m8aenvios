@@ -1,0 +1,74 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { DeliveryProvider } from "@/contexts/DeliveryContext";
+import { PickupProvider } from "@/contexts/PickupContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+
+SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
+
+function RootLayoutNav() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === '(tabs)';
+
+    if (!isAuthenticated && inAuthGroup) {
+      router.replace('/login');
+    } else if (isAuthenticated && !inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, segments, isLoading]);
+
+  return (
+    <Stack screenOptions={{ headerBackTitle: "Atrás" }}>
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="assign-delivery" 
+        options={{ 
+          title: "Asignar Paquete",
+          presentation: "modal",
+          headerShown: true,
+        }} 
+      />
+      <Stack.Screen 
+        name="new-pickup" 
+        options={{ 
+          title: "Nueva Recolección",
+          presentation: "modal",
+          headerShown: true,
+        }} 
+      />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <DeliveryProvider>
+          <PickupProvider>
+            <GestureHandlerRootView>
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </PickupProvider>
+        </DeliveryProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
