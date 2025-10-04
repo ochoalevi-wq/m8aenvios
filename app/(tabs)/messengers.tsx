@@ -3,7 +3,7 @@ import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS } from '@/types/delivery';
 import type { Delivery } from '@/types/delivery';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   CheckCircle, 
   Clock, 
@@ -17,7 +17,9 @@ import {
   UserPlus,
   Calendar,
   CreditCard,
-  Car
+  Car,
+  MessageCircle,
+  Camera
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -27,8 +29,21 @@ import {
   ScrollView, 
   TouchableOpacity,
   ActivityIndicator,
-  Linking 
+  Linking,
+  Alert,
+  Platform
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
+
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+}
 
 interface MessengerStats {
   name: string;
@@ -60,9 +75,61 @@ export default function MessengersScreen() {
   const router = useRouter();
   const [expandedMessenger, setExpandedMessenger] = useState<string | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | null>(null);
+  const [previousDeliveriesCount, setPreviousDeliveriesCount] = useState<number>(0);
 
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' && isMessenger) {
+      requestNotificationPermissions();
+    }
+  }, [isMessenger]);
+
+  useEffect(() => {
+    if (isMessenger && user?.id) {
+      const myDeliveries = deliveries.filter(d => d.messengerId === user.id);
+      if (myDeliveries.length > previousDeliveriesCount && previousDeliveriesCount > 0) {
+        sendNotification('Nuevo paquete asignado', 'Se te ha asignado un nuevo paquete para entregar');
+      }
+      setPreviousDeliveriesCount(myDeliveries.length);
+    }
+  }, [deliveries, isMessenger, user?.id, previousDeliveriesCount]);
+
+  const requestNotificationPermissions = async () => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        console.log('Permiso de notificaciones denegado');
+      }
+    } catch (error) {
+      console.error('Error solicitando permisos de notificaciones:', error);
+    }
+  };
+
+  const sendNotification = async (title: string, body: string) => {
+    if (Platform.OS === 'web') {
+      console.log('Notificación:', title, body);
+      return;
+    }
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: true,
+        },
+        trigger: null,
+      });
+    } catch (error) {
+      console.error('Error enviando notificación:', error);
+    }
+  };
 
   const messengerCredentials = useMemo(() => {
     return credentials.filter(c => c.role === 'messenger');
@@ -163,6 +230,19 @@ export default function MessengersScreen() {
 
     const handleCall = (phone: string) => {
       Linking.openURL(`tel:${phone}`);
+    };
+
+    const handleWhatsApp = (phone: string, name: string) => {
+      const message = encodeURIComponent(`Hola ${name}, soy tu mensajero. Estoy en camino con tu paquete.`);
+      Linking.openURL(`https://wa.me/502${phone}?text=${message}`);
+    };
+
+    const handleTakePhoto = async (deliveryId: string) => {
+      Alert.alert(
+        'Foto del Paquete',
+        'La funcionalidad de cámara estará disponible en la versión móvil de la aplicación.',
+        [{ text: 'OK' }]
+      );
     };
 
     const handleStatusChange = async (deliveryId: string, newStatus: 'in_transit' | 'delivered') => {
@@ -295,11 +375,21 @@ export default function MessengersScreen() {
                     <View style={styles.deliveryDetailRow}>
                       <Phone color={Colors.light.muted} size={16} />
                       <Text style={styles.deliveryDetailText}>+502 {delivery.receiver.phone}</Text>
+                    </View>
+                    <View style={styles.contactActions}>
                       <TouchableOpacity
-                        style={styles.callButton}
+                        style={[styles.contactButton, styles.callButtonStyle]}
                         onPress={() => handleCall(`+502${delivery.receiver.phone}`)}
                       >
-                        <Text style={styles.callButtonText}>Llamar</Text>
+                        <Phone color="#FFFFFF" size={18} />
+                        <Text style={styles.contactButtonText}>Llamar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.contactButton, styles.whatsappButton]}
+                        onPress={() => handleWhatsApp(delivery.receiver.phone, delivery.receiver.name)}
+                      >
+                        <MessageCircle color="#FFFFFF" size={18} />
+                        <Text style={styles.contactButtonText}>WhatsApp</Text>
                       </TouchableOpacity>
                     </View>
                     <View style={styles.deliveryDetailRow}>
@@ -334,6 +424,13 @@ export default function MessengersScreen() {
                   </View>
 
                   <View style={styles.deliveryActions}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonCamera]}
+                      onPress={() => handleTakePhoto(delivery.id)}
+                    >
+                      <Camera color="#FFFFFF" size={20} />
+                      <Text style={styles.actionButtonText}>Tomar Foto</Text>
+                    </TouchableOpacity>
                     {canStartTransit && (
                       <TouchableOpacity
                         style={[styles.actionButton, styles.actionButtonPrimary]}
@@ -1150,9 +1247,37 @@ const styles = StyleSheet.create({
   actionButtonSuccess: {
     backgroundColor: '#10B981',
   },
+  actionButtonCamera: {
+    backgroundColor: '#8B5CF6',
+  },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  contactActions: {
+    flexDirection: 'row' as const,
+    gap: 8,
+    marginVertical: 8,
+  },
+  contactButton: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  callButtonStyle: {
+    backgroundColor: Colors.light.primary,
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+  },
+  contactButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
     color: '#FFFFFF',
   },
 });
