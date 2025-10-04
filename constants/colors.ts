@@ -17,6 +17,7 @@ export default {
     warning: '#F59E0B',
     danger: '#EF4444',
     muted: '#64748B',
+    textSecondary: '#64748B',
   },
   dark: {
     text: '#ECEDEE',
@@ -33,5 +34,6 @@ export default {
     warning: '#FBBF24',
     danger: '#F87171',
     muted: '#94A3B8',
+    textSecondary: '#94A3B8',
   },
 };
