@@ -5,7 +5,7 @@ import { TouchableOpacity, View, Image, Modal, StyleSheet, Text, ScrollView, Ani
 import { useAuth } from "@/contexts/AuthContext";
 import { useMenu } from "@/contexts/MenuContext";
 import Colors from "@/constants/colors";
-import { Home, Package, PlusCircle, Users, Settings, PackageCheck, MapPin } from "lucide-react-native";
+import { Home, Package, PlusCircle, Users, Settings, PackageCheck, MapPin, BookOpen } from "lucide-react-native";
 
 const { width } = Dimensions.get('window');
 const MENU_WIDTH = width * 0.75;
@@ -71,6 +71,12 @@ function DrawerMenu() {
       icon: MapPin, 
       path: "/(tabs)/messenger-locations",
       show: !isMessenger 
+    },
+    { 
+      label: "Guía de Usuario", 
+      icon: BookOpen, 
+      path: "/(tabs)/guide",
+      show: true 
     },
     { 
       label: "Ajustes", 
@@ -217,6 +223,12 @@ export default function TabLayout() {
           name="messenger-locations"
           options={{
             headerTitle: "Ubicación de Mensajeros",
+          }}
+        />
+        <Stack.Screen
+          name="guide"
+          options={{
+            headerTitle: "Guía de Usuario",
           }}
         />
         <Stack.Screen
