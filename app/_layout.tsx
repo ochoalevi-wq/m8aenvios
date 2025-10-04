@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DeliveryProvider } from "@/contexts/DeliveryContext";
 import { PickupProvider } from "@/contexts/PickupContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { MenuProvider } from "@/contexts/MenuContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -63,9 +64,11 @@ export default function RootLayout() {
       <AuthProvider>
         <DeliveryProvider>
           <PickupProvider>
-            <GestureHandlerRootView>
-              <RootLayoutNav />
-            </GestureHandlerRootView>
+            <MenuProvider>
+              <GestureHandlerRootView>
+                <RootLayoutNav />
+              </GestureHandlerRootView>
+            </MenuProvider>
           </PickupProvider>
         </DeliveryProvider>
       </AuthProvider>
