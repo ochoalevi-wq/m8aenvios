@@ -7,6 +7,7 @@ import { DeliveryProvider } from "@/contexts/DeliveryContext";
 import { PickupProvider } from "@/contexts/PickupContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MenuProvider } from "@/contexts/MenuContext";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -60,18 +61,20 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <DeliveryProvider>
-          <PickupProvider>
-            <MenuProvider>
-              <GestureHandlerRootView>
-                <RootLayoutNav />
-              </GestureHandlerRootView>
-            </MenuProvider>
-          </PickupProvider>
-        </DeliveryProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <DeliveryProvider>
+            <PickupProvider>
+              <MenuProvider>
+                <GestureHandlerRootView>
+                  <RootLayoutNav />
+                </GestureHandlerRootView>
+              </MenuProvider>
+            </PickupProvider>
+          </DeliveryProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
