@@ -5,7 +5,7 @@ import { TouchableOpacity, View, Image, Modal, StyleSheet, Text, ScrollView, Ani
 import { useAuth } from "@/contexts/AuthContext";
 import { useMenu } from "@/contexts/MenuContext";
 import Colors from "@/constants/colors";
-import { Home, Package, PlusCircle, Users, Settings, PackageCheck, MapPin, BookOpen, BarChart3 } from "lucide-react-native";
+import { Home, Package, PlusCircle, Users, Settings, PackageCheck, MapPin, BookOpen, BarChart3, MoveVertical } from "lucide-react-native";
 
 const { width } = Dimensions.get('window');
 const MENU_WIDTH = width * 0.75;
@@ -70,6 +70,12 @@ function DrawerMenu() {
       label: "Ubicaciones", 
       icon: MapPin, 
       path: "/(tabs)/messenger-locations",
+      show: !isMessenger 
+    },
+    { 
+      label: "Arrastrar y Asignar", 
+      icon: MoveVertical, 
+      path: "/(tabs)/drag-assign",
       show: !isMessenger 
     },
     { 
@@ -241,6 +247,12 @@ export default function TabLayout() {
           name="control"
           options={{
             headerTitle: "Control y Estadísticas",
+          }}
+        />
+        <Stack.Screen
+          name="drag-assign"
+          options={{
+            headerTitle: "Arrastrar y Asignar",
           }}
         />
         <Stack.Screen
