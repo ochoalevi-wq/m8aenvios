@@ -61,6 +61,13 @@ export interface MessengerAvailability {
   updatedAt: string;
 }
 
+export interface MessengerLocation {
+  messengerId: string;
+  latitude: number;
+  longitude: number;
+  updatedAt: string;
+}
+
 export const ZONE_LABELS: Record<Zone, string> = {
   zona_1: 'Zona 1',
   zona_2: 'Zona 2',
