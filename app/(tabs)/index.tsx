@@ -16,7 +16,7 @@ export default function DashboardScreen() {
   
   const myDeliveries = useMemo(() => {
     if (isMessenger && user) {
-      return deliveries.filter(d => d.messenger === user.name);
+      return deliveries.filter(d => d.messengerId === user.id);
     }
     return deliveries;
   }, [deliveries, isMessenger, user]);
