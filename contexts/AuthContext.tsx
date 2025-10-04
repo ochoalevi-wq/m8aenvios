@@ -15,6 +15,9 @@ export interface User {
   role: UserRole;
 }
 
+export type LicenseType = 'A' | 'B' | 'C' | 'M';
+export type VehicleType = 'moto' | 'carro' | 'camion';
+
 export interface Credential {
   id: string;
   username: string;
@@ -24,6 +27,9 @@ export interface Credential {
   lastName: string;
   phoneNumber: string;
   createdAt: string;
+  age?: number;
+  licenseType?: LicenseType;
+  vehicleType?: VehicleType;
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -132,7 +138,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, []);
 
-  const addCredential = useCallback(async (username: string, password: string, role: UserRole, firstName: string, lastName: string, phoneNumber: string) => {
+  const addCredential = useCallback(async (
+    username: string, 
+    password: string, 
+    role: UserRole, 
+    firstName: string, 
+    lastName: string, 
+    phoneNumber: string,
+    age?: number,
+    licenseType?: LicenseType,
+    vehicleType?: VehicleType
+  ) => {
     const newCredential: Credential = {
       id: Date.now().toString(),
       username,
@@ -142,6 +158,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       lastName,
       phoneNumber,
       createdAt: new Date().toISOString(),
+      age,
+      licenseType,
+      vehicleType,
     };
     
     const updated = [...credentials, newCredential];
@@ -154,9 +173,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [credentials]);
 
-  const updateCredential = useCallback(async (id: string, username: string, password: string, role: UserRole, firstName: string, lastName: string, phoneNumber: string) => {
+  const updateCredential = useCallback(async (
+    id: string, 
+    username: string, 
+    password: string, 
+    role: UserRole, 
+    firstName: string, 
+    lastName: string, 
+    phoneNumber: string,
+    age?: number,
+    licenseType?: LicenseType,
+    vehicleType?: VehicleType
+  ) => {
     const updated = credentials.map(c => 
-      c.id === id ? { ...c, username, password, role, firstName, lastName, phoneNumber } : c
+      c.id === id ? { ...c, username, password, role, firstName, lastName, phoneNumber, age, licenseType, vehicleType } : c
     );
     try {
       await AsyncStorage.setItem(CREDENTIALS_STORAGE_KEY, JSON.stringify(updated));

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal } from 'react-native';
-import { useAuth, UserRole, Credential, useMessengers } from '@/contexts/AuthContext';
+import { useAuth, UserRole, Credential, useMessengers, LicenseType, VehicleType } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone } from 'lucide-react-native';
+import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 
@@ -16,6 +16,9 @@ export default function SettingsScreen() {
   const [formFirstName, setFormFirstName] = useState<string>('');
   const [formLastName, setFormLastName] = useState<string>('');
   const [formPhoneNumber, setFormPhoneNumber] = useState<string>('');
+  const [formAge, setFormAge] = useState<string>('');
+  const [formLicenseType, setFormLicenseType] = useState<LicenseType>('B');
+  const [formVehicleType, setFormVehicleType] = useState<VehicleType>('moto');
 
   const isAdmin = user?.role === 'admin';
   const isMessenger = user?.role === 'messenger';
@@ -64,6 +67,9 @@ export default function SettingsScreen() {
     setFormFirstName('');
     setFormLastName('');
     setFormPhoneNumber('');
+    setFormAge('');
+    setFormLicenseType('B');
+    setFormVehicleType('moto');
     setModalVisible(true);
   };
 
@@ -75,6 +81,9 @@ export default function SettingsScreen() {
     setFormFirstName(credential.firstName);
     setFormLastName(credential.lastName);
     setFormPhoneNumber(credential.phoneNumber);
+    setFormAge(credential.age?.toString() || '');
+    setFormLicenseType(credential.licenseType || 'B');
+    setFormVehicleType(credential.vehicleType || 'moto');
     setModalVisible(true);
   };
 
@@ -119,12 +128,37 @@ export default function SettingsScreen() {
       return;
     }
 
+    const age = formAge.trim() ? parseInt(formAge.trim(), 10) : undefined;
+    const licenseType = formRole === 'messenger' ? formLicenseType : undefined;
+    const vehicleType = formRole === 'messenger' ? formVehicleType : undefined;
+
     try {
       if (editingCredential) {
-        await updateCredential(editingCredential.id, formUsername.trim(), formPassword.trim(), formRole, formFirstName.trim(), formLastName.trim(), formPhoneNumber.trim());
+        await updateCredential(
+          editingCredential.id, 
+          formUsername.trim(), 
+          formPassword.trim(), 
+          formRole, 
+          formFirstName.trim(), 
+          formLastName.trim(), 
+          formPhoneNumber.trim(),
+          age,
+          licenseType,
+          vehicleType
+        );
         Alert.alert('Éxito', 'Usuario actualizado correctamente');
       } else {
-        await addCredential(formUsername.trim(), formPassword.trim(), formRole, formFirstName.trim(), formLastName.trim(), formPhoneNumber.trim());
+        await addCredential(
+          formUsername.trim(), 
+          formPassword.trim(), 
+          formRole, 
+          formFirstName.trim(), 
+          formLastName.trim(), 
+          formPhoneNumber.trim(),
+          age,
+          licenseType,
+          vehicleType
+        );
         Alert.alert('Éxito', 'Usuario agregado correctamente');
       }
       setModalVisible(false);
@@ -418,6 +452,111 @@ export default function SettingsScreen() {
                 />
                 <Text style={styles.formHint}>Asegúrate de compartir esta contraseña de forma segura</Text>
               </View>
+
+              {formRole === 'messenger' && (
+                <>
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Edad</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="Ingresa la edad"
+                      value={formAge}
+                      onChangeText={setFormAge}
+                      keyboardType="number-pad"
+                      autoCorrect={false}
+                    />
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Tipo de Licencia</Text>
+                    <View style={styles.licenseSelector}>
+                      {(['A', 'B', 'C', 'M'] as LicenseType[]).map((type) => (
+                        <TouchableOpacity
+                          key={type}
+                          style={[
+                            styles.licenseOption,
+                            formLicenseType === type && styles.licenseOptionActive,
+                          ]}
+                          onPress={() => setFormLicenseType(type)}
+                        >
+                          <CreditCard 
+                            color={formLicenseType === type ? '#FFFFFF' : Colors.light.muted} 
+                            size={20} 
+                          />
+                          <Text style={[
+                            styles.licenseOptionText,
+                            formLicenseType === type && styles.licenseOptionTextActive,
+                          ]}>
+                            Tipo {type}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>Tipo de Vehículo</Text>
+                    <View style={styles.vehicleSelector}>
+                      <TouchableOpacity
+                        style={[
+                          styles.vehicleOption,
+                          formVehicleType === 'moto' && styles.vehicleOptionActive,
+                        ]}
+                        onPress={() => setFormVehicleType('moto')}
+                      >
+                        <Car 
+                          color={formVehicleType === 'moto' ? '#FFFFFF' : Colors.light.muted} 
+                          size={20} 
+                        />
+                        <Text style={[
+                          styles.vehicleOptionText,
+                          formVehicleType === 'moto' && styles.vehicleOptionTextActive,
+                        ]}>
+                          Motocicleta
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.vehicleOption,
+                          formVehicleType === 'carro' && styles.vehicleOptionActive,
+                        ]}
+                        onPress={() => setFormVehicleType('carro')}
+                      >
+                        <Car 
+                          color={formVehicleType === 'carro' ? '#FFFFFF' : Colors.light.muted} 
+                          size={20} 
+                        />
+                        <Text style={[
+                          styles.vehicleOptionText,
+                          formVehicleType === 'carro' && styles.vehicleOptionTextActive,
+                        ]}>
+                          Automóvil
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.vehicleOption,
+                          formVehicleType === 'camion' && styles.vehicleOptionActive,
+                        ]}
+                        onPress={() => setFormVehicleType('camion')}
+                      >
+                        <Car 
+                          color={formVehicleType === 'camion' ? '#FFFFFF' : Colors.light.muted} 
+                          size={20} 
+                        />
+                        <Text style={[
+                          styles.vehicleOptionText,
+                          formVehicleType === 'camion' && styles.vehicleOptionTextActive,
+                        ]}>
+                          Camión
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </>
+              )}
 
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Rol del Usuario</Text>
@@ -950,6 +1089,63 @@ const styles = StyleSheet.create({
   },
   availabilityStatusTextActive: {
     color: '#10B981',
+  },
+  licenseSelector: {
+    flexDirection: 'row' as const,
+    gap: 8,
+  },
+  licenseOption: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 6,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.light.border,
+    backgroundColor: Colors.light.background,
+  },
+  licenseOptionActive: {
+    backgroundColor: Colors.light.primary,
+    borderColor: Colors.light.primary,
+  },
+  licenseOptionText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+  },
+  licenseOptionTextActive: {
+    color: '#FFFFFF',
+  },
+  vehicleSelector: {
+    flexDirection: 'row' as const,
+    gap: 8,
+  },
+  vehicleOption: {
+    flex: 1,
+    flexDirection: 'column' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.light.border,
+    backgroundColor: Colors.light.background,
+  },
+  vehicleOptionActive: {
+    backgroundColor: Colors.light.primary,
+    borderColor: Colors.light.primary,
+  },
+  vehicleOptionText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+    textAlign: 'center' as const,
+  },
+  vehicleOptionTextActive: {
+    color: '#FFFFFF',
   },
   phoneInputContainer: {
     flexDirection: 'row' as const,

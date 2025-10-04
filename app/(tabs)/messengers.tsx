@@ -1,5 +1,5 @@
 import { useDeliveries } from '@/contexts/DeliveryContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS } from '@/types/delivery';
 import type { Delivery } from '@/types/delivery';
@@ -14,7 +14,10 @@ import {
   MapPin,
   Phone,
   User as UserIcon,
-  UserPlus
+  UserPlus,
+  Calendar,
+  CreditCard,
+  Car
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -38,9 +41,22 @@ interface MessengerStats {
   completionRate: number;
 }
 
+const VEHICLE_LABELS: Record<string, string> = {
+  moto: 'Motocicleta',
+  carro: 'Automóvil',
+  camion: 'Camión',
+};
+
+const LICENSE_LABELS: Record<string, string> = {
+  A: 'Licencia A',
+  B: 'Licencia B',
+  C: 'Licencia C',
+  M: 'Licencia M',
+};
+
 export default function MessengersScreen() {
   const { deliveries, isLoading, updateStatus } = useDeliveries();
-  const { user } = useAuth();
+  const { user, credentials } = useAuth();
   const router = useRouter();
   const [expandedMessenger, setExpandedMessenger] = useState<string | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | null>(null);
@@ -48,43 +64,51 @@ export default function MessengersScreen() {
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
 
+  const messengerCredentials = useMemo(() => {
+    return credentials.filter(c => c.role === 'messenger');
+  }, [credentials]);
+
   const messengerStats = useMemo(() => {
-    const statsMap = new Map<string, MessengerStats>();
+    const statsMap = new Map<string, MessengerStats & { credential?: Credential }>();
+
+    messengerCredentials.forEach((credential) => {
+      const messengerName = `${credential.firstName} ${credential.lastName}`;
+      statsMap.set(credential.id, {
+        name: messengerName,
+        totalDeliveries: 0,
+        delivered: 0,
+        inTransit: 0,
+        pending: 0,
+        totalRevenue: 0,
+        averageDeliveryValue: 0,
+        completionRate: 0,
+        credential,
+      });
+    });
 
     deliveries.forEach((delivery) => {
-      const messengerName = delivery.messenger;
-      
-      if (!statsMap.has(messengerName)) {
-        statsMap.set(messengerName, {
-          name: messengerName,
-          totalDeliveries: 0,
-          delivered: 0,
-          inTransit: 0,
-          pending: 0,
-          totalRevenue: 0,
-          averageDeliveryValue: 0,
-          completionRate: 0,
-        });
+      if (delivery.messengerId && statsMap.has(delivery.messengerId)) {
+        const stats = statsMap.get(delivery.messengerId)!;
+        const deliveryValue = delivery.packageCost + delivery.shippingCost;
+
+        stats.totalDeliveries++;
+        stats.totalRevenue += deliveryValue;
+
+        if (delivery.status === 'delivered') stats.delivered++;
+        if (delivery.status === 'in_transit') stats.inTransit++;
+        if (delivery.status === 'pending') stats.pending++;
       }
-
-      const stats = statsMap.get(messengerName)!;
-      const deliveryValue = delivery.packageCost + delivery.shippingCost;
-
-      stats.totalDeliveries++;
-      stats.totalRevenue += deliveryValue;
-
-      if (delivery.status === 'delivered') stats.delivered++;
-      if (delivery.status === 'in_transit') stats.inTransit++;
-      if (delivery.status === 'pending') stats.pending++;
     });
 
     statsMap.forEach((stats) => {
-      stats.averageDeliveryValue = stats.totalRevenue / stats.totalDeliveries;
-      stats.completionRate = (stats.delivered / stats.totalDeliveries) * 100;
+      if (stats.totalDeliveries > 0) {
+        stats.averageDeliveryValue = stats.totalRevenue / stats.totalDeliveries;
+        stats.completionRate = (stats.delivered / stats.totalDeliveries) * 100;
+      }
     });
 
     return Array.from(statsMap.values()).sort((a, b) => b.totalDeliveries - a.totalDeliveries);
-  }, [deliveries]);
+  }, [deliveries, messengerCredentials]);
 
   const topPerformer = useMemo(() => {
     if (messengerStats.length === 0) return null;
@@ -93,9 +117,9 @@ export default function MessengersScreen() {
     );
   }, [messengerStats]);
 
-  const getMessengerDeliveries = (messengerName: string) => {
+  const getMessengerDeliveries = (messengerId: string) => {
     return deliveries
-      .filter((d) => d.messenger === messengerName)
+      .filter((d) => d.messengerId === messengerId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
   };
@@ -394,14 +418,15 @@ export default function MessengersScreen() {
       </View>
 
       {messengerStats.map((messenger) => {
-        const isExpanded = expandedMessenger === messenger.name;
-        const messengerDeliveries = isExpanded ? getMessengerDeliveries(messenger.name) : [];
+        const messengerId = messenger.credential?.id || '';
+        const isExpanded = expandedMessenger === messengerId;
+        const messengerDeliveries = isExpanded ? getMessengerDeliveries(messengerId) : [];
 
         return (
-          <View key={messenger.name} style={styles.messengerCard}>
+          <View key={messengerId} style={styles.messengerCard}>
             <TouchableOpacity
               style={styles.messengerHeader}
-              onPress={() => setExpandedMessenger(isExpanded ? null : messenger.name)}
+              onPress={() => setExpandedMessenger(isExpanded ? null : messengerId)}
               activeOpacity={0.7}
             >
               <View style={styles.messengerHeaderLeft}>
@@ -421,6 +446,49 @@ export default function MessengersScreen() {
                 <ChevronDown color={Colors.light.muted} size={24} />
               )}
             </TouchableOpacity>
+
+            {messenger.credential && (
+              <View style={styles.messengerDetailsCard}>
+                <View style={styles.messengerDetailRow}>
+                  <View style={styles.messengerDetailItem}>
+                    <Phone color={Colors.light.primary} size={18} />
+                    <View style={styles.messengerDetailContent}>
+                      <Text style={styles.messengerDetailLabel}>Teléfono</Text>
+                      <Text style={styles.messengerDetailValue}>+502 {messenger.credential.phoneNumber}</Text>
+                    </View>
+                  </View>
+                  {messenger.credential.age && (
+                    <View style={styles.messengerDetailItem}>
+                      <Calendar color={Colors.light.primary} size={18} />
+                      <View style={styles.messengerDetailContent}>
+                        <Text style={styles.messengerDetailLabel}>Edad</Text>
+                        <Text style={styles.messengerDetailValue}>{messenger.credential.age} años</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.messengerDetailRow}>
+                  {messenger.credential.licenseType && (
+                    <View style={styles.messengerDetailItem}>
+                      <CreditCard color={Colors.light.primary} size={18} />
+                      <View style={styles.messengerDetailContent}>
+                        <Text style={styles.messengerDetailLabel}>Licencia</Text>
+                        <Text style={styles.messengerDetailValue}>{LICENSE_LABELS[messenger.credential.licenseType]}</Text>
+                      </View>
+                    </View>
+                  )}
+                  {messenger.credential.vehicleType && (
+                    <View style={styles.messengerDetailItem}>
+                      <Car color={Colors.light.primary} size={18} />
+                      <View style={styles.messengerDetailContent}>
+                        <Text style={styles.messengerDetailLabel}>Vehículo</Text>
+                        <Text style={styles.messengerDetailValue}>{VEHICLE_LABELS[messenger.credential.vehicleType]}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
 
             <View style={styles.messengerStatsGrid}>
               <View style={styles.statBox}>
@@ -819,6 +887,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
     color: Colors.light.primary,
+  },
+  messengerDetailsCard: {
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  messengerDetailRow: {
+    flexDirection: 'row' as const,
+    gap: 12,
+  },
+  messengerDetailItem: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 10,
+    backgroundColor: Colors.light.card,
+    padding: 12,
+    borderRadius: 10,
+  },
+  messengerDetailContent: {
+    flex: 1,
+  },
+  messengerDetailLabel: {
+    fontSize: 11,
+    color: Colors.light.muted,
+    marginBottom: 2,
+  },
+  messengerDetailValue: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
   },
   messengerWelcomeCard: {
     backgroundColor: Colors.light.primary,
