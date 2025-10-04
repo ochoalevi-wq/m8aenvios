@@ -4,22 +4,21 @@ import { Stack, useRouter } from 'expo-router';
 import { usePickups } from '@/contexts/PickupContext';
 import { useMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import { MapPin, User, Phone, Package, FileText } from 'lucide-react-native';
+import { MapPin, User, Phone } from 'lucide-react-native';
 
 export default function NewPickupScreen() {
   const router = useRouter();
   const { addPickup } = usePickups();
   const messengers = useMessengers();
 
-  const [establishmentName, setEstablishmentName] = useState<string>('');
+  const [senderName, setSenderName] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [price, setPrice] = useState<string>('');
   const [selectedMessenger, setSelectedMessenger] = useState<string>('');
 
   const handleSubmit = async () => {
-    if (!establishmentName.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el nombre del establecimiento.');
+    if (!senderName.trim()) {
+      Alert.alert('Error', 'Por favor ingresa el nombre de la persona que envía.');
       return;
     }
     if (!address.trim()) {
@@ -30,18 +29,9 @@ export default function NewPickupScreen() {
       Alert.alert('Error', 'Por favor ingresa el número de teléfono.');
       return;
     }
-    if (!price.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el precio.');
-      return;
-    }
+
     if (!selectedMessenger) {
       Alert.alert('Error', 'Por favor selecciona un mensajero.');
-      return;
-    }
-
-    const priceValue = parseFloat(price);
-    if (isNaN(priceValue) || priceValue < 0) {
-      Alert.alert('Error', 'Por favor ingresa un precio válido.');
       return;
     }
 
@@ -50,7 +40,7 @@ export default function NewPickupScreen() {
       
       await addPickup({
         sender: {
-          name: establishmentName.trim(),
+          name: senderName.trim(),
           phone: phoneNumber.trim(),
           address: address.trim(),
         },
@@ -61,7 +51,6 @@ export default function NewPickupScreen() {
         scheduledTime: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }),
         status: 'scheduled',
         packageCount: 1,
-        notes: `Precio: Q${priceValue.toFixed(2)}`,
       });
 
       Alert.alert('Éxito', 'Recolección agendada correctamente.', [
@@ -98,14 +87,14 @@ export default function NewPickupScreen() {
           
           <View style={styles.inputGroup}>
             <View style={styles.inputLabel}>
-              <Package color={Colors.light.primary} size={18} />
-              <Text style={styles.labelText}>Nombre del Establecimiento</Text>
+              <User color={Colors.light.primary} size={18} />
+              <Text style={styles.labelText}>Nombre de la Persona que Envía</Text>
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Restaurante El Buen Sabor"
-              value={establishmentName}
-              onChangeText={setEstablishmentName}
+              placeholder="Ej: Juan Pérez"
+              value={senderName}
+              onChangeText={setSenderName}
               placeholderTextColor={Colors.light.muted}
             />
           </View>
@@ -139,24 +128,6 @@ export default function NewPickupScreen() {
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
-                placeholderTextColor={Colors.light.muted}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputLabel}>
-              <FileText color={Colors.light.primary} size={18} />
-              <Text style={styles.labelText}>Precio</Text>
-            </View>
-            <View style={styles.priceInputContainer}>
-              <Text style={styles.currencySymbol}>Q</Text>
-              <TextInput
-                style={styles.priceInput}
-                placeholder="0.00"
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="decimal-pad"
                 placeholderTextColor={Colors.light.muted}
               />
             </View>
