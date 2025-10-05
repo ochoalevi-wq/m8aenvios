@@ -81,6 +81,18 @@ export default function NewDeliveryScreen() {
         description: description || undefined,
       });
 
+      setSenderName('');
+      setSenderPhone('');
+      setSenderAddress('');
+      setReceiverName('');
+      setReceiverPhone('');
+      setReceiverAddress('');
+      setMessenger('Sin asignar');
+      setZone('zona_1');
+      setPackageCost('');
+      setShippingCost('');
+      setDescription('');
+
       Alert.alert('Éxito', 'Envío creado correctamente', [
         {
           text: 'OK',
