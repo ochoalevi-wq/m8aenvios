@@ -47,6 +47,8 @@ export interface Pickup {
   updatedAt: string;
   notes?: string;
   packageCount: number;
+  pickupOnly?: boolean;
+  cost?: number;
 }
 
 export interface PickupStats {

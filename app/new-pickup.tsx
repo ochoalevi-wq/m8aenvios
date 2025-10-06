@@ -1,24 +1,26 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { usePickups } from '@/contexts/PickupContext';
 import { useMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import { MapPin, User, Phone } from 'lucide-react-native';
+import { MapPin, User, Phone, Building2, DollarSign, Package } from 'lucide-react-native';
 
 export default function NewPickupScreen() {
   const router = useRouter();
   const { addPickup } = usePickups();
   const messengers = useMessengers();
 
-  const [senderName, setSenderName] = useState<string>('');
+  const [storeName, setStoreName] = useState<string>('');
   const [address, setAddress] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [pickupOnly, setPickupOnly] = useState<boolean>(false);
+  const [cost, setCost] = useState<string>('');
   const [selectedMessenger, setSelectedMessenger] = useState<string>('');
 
   const handleSubmit = async () => {
-    if (!senderName.trim()) {
-      Alert.alert('Error', 'Por favor ingresa el nombre de la persona que envía.');
+    if (!storeName.trim()) {
+      Alert.alert('Error', 'Por favor ingresa el nombre de la tienda u empresa.');
       return;
     }
     if (!address.trim()) {
@@ -27,6 +29,10 @@ export default function NewPickupScreen() {
     }
     if (!phoneNumber.trim()) {
       Alert.alert('Error', 'Por favor ingresa el número de teléfono.');
+      return;
+    }
+    if (!cost.trim()) {
+      Alert.alert('Error', 'Por favor ingresa el costo.');
       return;
     }
 
@@ -40,7 +46,7 @@ export default function NewPickupScreen() {
       
       await addPickup({
         sender: {
-          name: senderName.trim(),
+          name: storeName.trim(),
           phone: phoneNumber.trim(),
           address: address.trim(),
         },
@@ -51,7 +57,16 @@ export default function NewPickupScreen() {
         scheduledTime: new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }),
         status: 'scheduled',
         packageCount: 1,
+        pickupOnly,
+        cost: parseFloat(cost),
       });
+
+      setStoreName('');
+      setAddress('');
+      setPhoneNumber('');
+      setPickupOnly(false);
+      setCost('');
+      setSelectedMessenger('');
 
       Alert.alert('Éxito', 'Recolección agendada correctamente.', [
         {
@@ -87,14 +102,14 @@ export default function NewPickupScreen() {
           
           <View style={styles.inputGroup}>
             <View style={styles.inputLabel}>
-              <User color={Colors.light.primary} size={18} />
-              <Text style={styles.labelText}>Nombre de la Persona que Envía</Text>
+              <Building2 color={Colors.light.primary} size={18} />
+              <Text style={styles.labelText}>Nombre de la Tienda u Empresa</Text>
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Ej: Juan Pérez"
-              value={senderName}
-              onChangeText={setSenderName}
+              placeholder="Ej: Tienda El Sol"
+              value={storeName}
+              onChangeText={setStoreName}
               placeholderTextColor={Colors.light.muted}
             />
           </View>
@@ -131,6 +146,44 @@ export default function NewPickupScreen() {
                 placeholderTextColor={Colors.light.muted}
               />
             </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.inputLabel}>
+              <DollarSign color={Colors.light.primary} size={18} />
+              <Text style={styles.labelText}>Costo</Text>
+            </View>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.currencySymbol}>Q</Text>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="0.00"
+                value={cost}
+                onChangeText={setCost}
+                keyboardType="decimal-pad"
+                placeholderTextColor={Colors.light.muted}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.switchContainer}>
+              <View style={styles.switchLabel}>
+                <Package color={Colors.light.primary} size={18} />
+                <Text style={styles.labelText}>Solo Recoger</Text>
+              </View>
+              <Switch
+                value={pickupOnly}
+                onValueChange={setPickupOnly}
+                trackColor={{ false: Colors.light.border, true: Colors.light.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+            {pickupOnly && (
+              <Text style={styles.helperText}>
+                Esta recolección es solo para recoger paquetes, sin entrega inmediata.
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -262,6 +315,27 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: Colors.light.text,
+  },
+  switchContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  switchLabel: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+  },
+  helperText: {
+    fontSize: 13,
+    color: Colors.light.muted,
+    marginTop: 8,
+    fontStyle: 'italic' as const,
   },
   messengerScrollView: {
     maxHeight: 300,
