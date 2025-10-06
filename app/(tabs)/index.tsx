@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, companyName } = useAuth();
   const isMessenger = user?.role === 'messenger';
   const { deliveries, isLoading, updateStatus } = useDeliveries();
   const stats = useDeliveryStats();
@@ -274,7 +274,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Text style={styles.title}>{isMessenger ? `Hola, ${user?.name}` : 'Dashboard'}</Text>
+        <Text style={styles.title}>{isMessenger ? `Hola, ${user?.name}` : (companyName || 'Dashboard')}</Text>
         <Text style={styles.subtitle}>{isMessenger ? 'Tus envíos asignados' : 'Gestión de Paquetes'}</Text>
       </View>
 
