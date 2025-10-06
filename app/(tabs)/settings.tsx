@@ -1,13 +1,13 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal, Linking } from 'react-native';
 import { useAuth, UserRole, Credential, useMessengers, LicenseType, VehicleType } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car, Moon, Sun } from 'lucide-react-native';
+import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car, Moon, Sun, MessageCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SettingsScreen() {
-  const { user, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability } = useAuth();
+  const { user, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability, whatsappNumber, updateWhatsappNumber } = useAuth();
   const messengers = useMessengers();
   const { themeMode, toggleTheme, colors } = useTheme();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -22,6 +22,7 @@ export default function SettingsScreen() {
   const [formLicenseType, setFormLicenseType] = useState<LicenseType>('B');
   const [formVehicleType, setFormVehicleType] = useState<VehicleType>('moto');
   const [editingCompanyName, setEditingCompanyName] = useState<string>(companyName);
+  const [editingWhatsappNumber, setEditingWhatsappNumber] = useState<string>(whatsappNumber);
 
   const isAdmin = user?.role === 'admin';
   const isMessenger = user?.role === 'messenger';
@@ -209,6 +210,73 @@ export default function SettingsScreen() {
             <Text style={[styles.userRole, { color: colors.muted }]}>
               {user?.role === 'admin' ? 'Administrador' : user?.role === 'messenger' ? 'Mensajero' : 'Agendador'}
             </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>WhatsApp de la Empresa</Text>
+        <Text style={[styles.sectionDescription, { color: colors.muted }]}>
+          Configura el número de WhatsApp para contacto directo
+        </Text>
+
+        <View style={[styles.whatsappCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.whatsappHeader}>
+            <View style={[styles.whatsappIconContainer, { backgroundColor: '#D1FAE5' }]}>
+              <MessageCircle color="#25D366" size={24} />
+            </View>
+            <View style={styles.whatsappInfo}>
+              <Text style={[styles.whatsappTitle, { color: colors.text }]}>Número de WhatsApp</Text>
+              <Text style={[styles.whatsappSubtitle, { color: colors.muted }]}>
+                {whatsappNumber ? `+502 ${whatsappNumber}` : 'No configurado'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.formLabel, { color: colors.text }]}>Número de Teléfono</Text>
+            <View style={[styles.phoneInputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.phonePrefix, { color: colors.primary }]}>+502</Text>
+              <TextInput
+                style={[styles.phoneInputField, { color: colors.text }]}
+                placeholderTextColor={colors.muted}
+                placeholder="Ingresa el número de WhatsApp"
+                value={editingWhatsappNumber}
+                onChangeText={setEditingWhatsappNumber}
+                keyboardType="phone-pad"
+                autoCorrect={false}
+              />
+            </View>
+            <TouchableOpacity 
+              style={[styles.saveWhatsappButton, { backgroundColor: '#25D366' }]}
+              onPress={() => updateWhatsappNumber(editingWhatsappNumber)}
+            >
+              <MessageCircle color="#FFFFFF" size={20} />
+              <Text style={styles.saveWhatsappButtonText}>Guardar Número de WhatsApp</Text>
+            </TouchableOpacity>
+            {whatsappNumber && (
+              <TouchableOpacity 
+                style={[styles.testWhatsappButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                onPress={() => {
+                  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
+                  const whatsappUrl = `whatsapp://send?phone=502${cleanPhone}`;
+                  Linking.canOpenURL(whatsappUrl)
+                    .then((supported) => {
+                      if (supported) {
+                        return Linking.openURL(whatsappUrl);
+                      } else {
+                        Alert.alert('Error', 'WhatsApp no está instalado en este dispositivo.');
+                      }
+                    })
+                    .catch((error) => {
+                      console.error('Error al abrir WhatsApp:', error);
+                      Alert.alert('Error', 'No se pudo abrir WhatsApp.');
+                    });
+                }}
+              >
+                <Text style={[styles.testWhatsappButtonText, { color: colors.text }]}>Probar Conexión</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -1225,5 +1293,72 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     fontSize: 16,
+  },
+  whatsappCard: {
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  whatsappHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 16,
+    marginBottom: 20,
+  },
+  whatsappIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  whatsappInfo: {
+    flex: 1,
+  },
+  whatsappTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  whatsappSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  saveWhatsappButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  saveWhatsappButtonText: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  testWhatsappButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center' as const,
+    marginTop: 8,
+    borderWidth: 1,
+  },
+  testWhatsappButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });

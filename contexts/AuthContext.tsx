@@ -7,6 +7,7 @@ const LOGO_STORAGE_KEY = '@app_logo';
 const COMPANY_NAME_STORAGE_KEY = '@company_name';
 const CREDENTIALS_STORAGE_KEY = '@app_credentials';
 const AVAILABILITY_STORAGE_KEY = '@messenger_availability';
+const WHATSAPP_STORAGE_KEY = '@whatsapp_number';
 
 export type UserRole = 'admin' | 'messenger' | 'scheduler';
 
@@ -40,6 +41,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [companyName, setCompanyName] = useState<string>('');
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
+  const [whatsappNumber, setWhatsappNumber] = useState<string>('');
 
   useEffect(() => {
     loadUser();
@@ -47,6 +49,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     loadCompanyName();
     loadCredentials();
     loadAvailability();
+    loadWhatsappNumber();
   }, []);
 
   const loadUser = async () => {
@@ -106,6 +109,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   };
 
+  const loadWhatsappNumber = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(WHATSAPP_STORAGE_KEY);
+      if (stored) {
+        setWhatsappNumber(stored);
+      }
+    } catch (error) {
+      console.error('Error loading WhatsApp number:', error);
+    }
+  };
+
   const updateLogo = useCallback(async (logoUri: string | null) => {
     try {
       if (logoUri) {
@@ -126,6 +140,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setCompanyName(name);
     } catch (error) {
       console.error('Error updating company name:', error);
+    }
+  }, []);
+
+  const updateWhatsappNumber = useCallback(async (number: string) => {
+    try {
+      await AsyncStorage.setItem(WHATSAPP_STORAGE_KEY, number);
+      setWhatsappNumber(number);
+    } catch (error) {
+      console.error('Error updating WhatsApp number:', error);
     }
   }, []);
 
@@ -313,7 +336,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     availability,
     toggleAvailability,
     setMessengerAvailability,
-  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, availability, toggleAvailability, setMessengerAvailability]);
+    whatsappNumber,
+    updateWhatsappNumber,
+  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, availability, toggleAvailability, setMessengerAvailability, whatsappNumber, updateWhatsappNumber]);
 });
 
 export const useMessengers = () => {
