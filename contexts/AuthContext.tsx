@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const AUTH_STORAGE_KEY = '@auth_user';
 const LOGO_STORAGE_KEY = '@app_logo';
+const COMPANY_NAME_STORAGE_KEY = '@company_name';
 const CREDENTIALS_STORAGE_KEY = '@app_credentials';
 const AVAILABILITY_STORAGE_KEY = '@messenger_availability';
 
@@ -36,12 +37,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [logo, setLogo] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string>('');
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadUser();
     loadLogo();
+    loadCompanyName();
     loadCredentials();
     loadAvailability();
   }, []);
@@ -67,6 +70,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
     } catch (error) {
       console.error('Error loading logo:', error);
+    }
+  };
+
+  const loadCompanyName = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(COMPANY_NAME_STORAGE_KEY);
+      if (stored) {
+        setCompanyName(stored);
+      }
+    } catch (error) {
+      console.error('Error loading company name:', error);
     }
   };
 
@@ -103,6 +117,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
     } catch (error) {
       console.error('Error updating logo:', error);
+    }
+  }, []);
+
+  const updateCompanyName = useCallback(async (name: string) => {
+    try {
+      await AsyncStorage.setItem(COMPANY_NAME_STORAGE_KEY, name);
+      setCompanyName(name);
+    } catch (error) {
+      console.error('Error updating company name:', error);
     }
   }, []);
 
@@ -281,6 +304,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     hasAdminRegistered,
     logo,
     updateLogo,
+    companyName,
+    updateCompanyName,
     credentials,
     addCredential,
     updateCredential,
@@ -288,7 +313,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     availability,
     toggleAvailability,
     setMessengerAvailability,
-  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential, availability, toggleAvailability, setMessengerAvailability]);
+  }), [user, isLoading, login, logout, register, hasAdminRegistered, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, availability, toggleAvailability, setMessengerAvailability]);
 });
 
 export const useMessengers = () => {

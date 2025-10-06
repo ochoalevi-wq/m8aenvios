@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 
 export default function SettingsScreen() {
-  const { user, logo, updateLogo, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability } = useAuth();
+  const { user, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability } = useAuth();
   const messengers = useMessengers();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
@@ -19,6 +19,7 @@ export default function SettingsScreen() {
   const [formAge, setFormAge] = useState<string>('');
   const [formLicenseType, setFormLicenseType] = useState<LicenseType>('B');
   const [formVehicleType, setFormVehicleType] = useState<VehicleType>('moto');
+  const [editingCompanyName, setEditingCompanyName] = useState<string>(companyName);
 
   const isAdmin = user?.role === 'admin';
   const isMessenger = user?.role === 'messenger';
@@ -257,10 +258,30 @@ export default function SettingsScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Logo de la Empresa</Text>
+        <Text style={styles.sectionTitle}>Información de la Empresa</Text>
         <Text style={styles.sectionDescription}>
-          Personaliza tu aplicación con el logo de tu empresa
+          Personaliza tu aplicación con el logo y nombre de tu empresa
         </Text>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.formLabel}>Nombre de la Empresa</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="Ingresa el nombre de tu empresa"
+            value={editingCompanyName}
+            onChangeText={setEditingCompanyName}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          <TouchableOpacity 
+            style={styles.saveNameButton}
+            onPress={() => updateCompanyName(editingCompanyName)}
+          >
+            <Text style={styles.saveNameButtonText}>Guardar Nombre</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.subSectionTitle}>Logo de la Empresa</Text>
 
         <View style={styles.logoContainer}>
           {logo ? (
@@ -791,6 +812,26 @@ const styles = StyleSheet.create({
     color: Colors.light.muted,
     textAlign: 'center' as const,
     lineHeight: 20,
+  },
+  subSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  saveNameButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    alignItems: 'center' as const,
+    marginTop: 8,
+  },
+  saveNameButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
   sectionHeader: {
     flexDirection: 'row' as const,
