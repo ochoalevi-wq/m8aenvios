@@ -1,10 +1,12 @@
 import { useDeliveries } from '@/contexts/DeliveryContext';
+import { usePickups } from '@/contexts/PickupContext';
 import { useAvailableMessengers } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { ZONE_LABELS, type Zone } from '@/types/delivery';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Package, User, MapPin, DollarSign, Truck, ChevronDown } from 'lucide-react-native';
+import { Package, User, MapPin, DollarSign, Truck, ChevronDown, Calendar, Clock } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   View,
   Text,
@@ -21,7 +23,15 @@ import {
 export default function NewDeliveryScreen() {
   const router = useRouter();
   const { addDelivery } = useDeliveries();
+  const { addPickup } = usePickups();
   const availableMessengers = useAvailableMessengers();
+  const { colors } = useTheme();
+
+  const [needsPickup, setNeedsPickup] = useState<boolean>(false);
+  const [pickupDate, setPickupDate] = useState<string>('');
+  const [pickupTime, setPickupTime] = useState<string>('');
+  const [packageCount, setPackageCount] = useState<string>('1');
+  const [pickupNotes, setPickupNotes] = useState<string>('');
 
   const [senderName, setSenderName] = useState<string>('');
   const [senderPhone, setSenderPhone] = useState<string>('');
@@ -44,12 +54,21 @@ export default function NewDeliveryScreen() {
       return;
     }
 
+    if (needsPickup) {
+      if (!pickupDate || !pickupTime) {
+        Alert.alert('Error', 'Por favor completa la fecha y hora de recolección');
+        return;
+      }
+      if (!packageCount || parseInt(packageCount) <= 0) {
+        Alert.alert('Error', 'Por favor ingresa una cantidad válida de paquetes');
+        return;
+      }
+    }
+
     if (!receiverName || !receiverPhone || !receiverAddress) {
       Alert.alert('Error', 'Por favor completa los datos del destinatario');
       return;
     }
-
-
 
     if (!packageCost || parseFloat(packageCost) <= 0) {
       Alert.alert('Error', 'Por favor ingresa un costo de paquete válido');
@@ -62,6 +81,23 @@ export default function NewDeliveryScreen() {
     }
 
     try {
+      if (needsPickup) {
+        await addPickup({
+          sender: {
+            name: senderName,
+            phone: senderPhone,
+            address: senderAddress,
+          },
+          messenger,
+          zone,
+          scheduledDate: pickupDate,
+          scheduledTime: pickupTime,
+          status: 'scheduled',
+          notes: pickupNotes || undefined,
+          packageCount: parseInt(packageCount),
+        });
+      }
+
       await addDelivery({
         sender: {
           name: senderName,
@@ -81,6 +117,11 @@ export default function NewDeliveryScreen() {
         description: description || undefined,
       });
 
+      setNeedsPickup(false);
+      setPickupDate('');
+      setPickupTime('');
+      setPackageCount('1');
+      setPickupNotes('');
       setSenderName('');
       setSenderPhone('');
       setSenderAddress('');
@@ -93,12 +134,16 @@ export default function NewDeliveryScreen() {
       setShippingCost('');
       setDescription('');
 
-      Alert.alert('Éxito', 'Envío creado correctamente', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      Alert.alert(
+        'Éxito',
+        needsPickup ? 'Envío y recolección creados correctamente' : 'Envío creado correctamente',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error creating delivery:', error);
       Alert.alert('Error', 'No se pudo crear el envío');
@@ -111,6 +156,88 @@ export default function NewDeliveryScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.section}>
+          <View style={styles.pickupToggleContainer}>
+            <View style={styles.pickupToggleInfo}>
+              <Text style={[styles.pickupToggleTitle, { color: colors.text }]}>¿Requiere Recolección?</Text>
+              <Text style={[styles.pickupToggleSubtitle, { color: colors.muted }]}>
+                Programa la recolección del paquete
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.toggleButton, needsPickup && { backgroundColor: colors.primary }]}
+              onPress={() => setNeedsPickup(!needsPickup)}
+            >
+              <View style={[styles.toggleCircle, needsPickup && styles.toggleCircleActive]} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {needsPickup && (
+          <View style={[styles.section, styles.pickupSection]}>
+            <View style={styles.sectionHeader}>
+              <Calendar color={colors.warning} size={24} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Detalles de Recolección</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Fecha de Recolección</Text>
+              <View style={[styles.inputWithIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Calendar color={colors.muted} size={20} />
+                <TextInput
+                  style={[styles.inputWithIconText, { color: colors.text }]}
+                  value={pickupDate}
+                  onChangeText={setPickupDate}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Hora de Recolección</Text>
+              <View style={[styles.inputWithIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Clock color={colors.muted} size={20} />
+                <TextInput
+                  style={[styles.inputWithIconText, { color: colors.text }]}
+                  value={pickupTime}
+                  onChangeText={setPickupTime}
+                  placeholder="HH:MM"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Cantidad de Paquetes</Text>
+              <View style={[styles.inputWithIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Package color={colors.muted} size={20} />
+                <TextInput
+                  style={[styles.inputWithIconText, { color: colors.text }]}
+                  value={packageCount}
+                  onChangeText={setPackageCount}
+                  placeholder="1"
+                  keyboardType="number-pad"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Notas (Opcional)</Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                value={pickupNotes}
+                onChangeText={setPickupNotes}
+                placeholder="Instrucciones especiales para la recolección..."
+                multiline
+                numberOfLines={2}
+                placeholderTextColor={colors.muted}
+              />
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <User color={Colors.light.primary} size={24} />
@@ -393,6 +520,57 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+  },
+  pickupToggleContainer: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  pickupToggleInfo: {
+    flex: 1,
+  },
+  pickupToggleTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    marginBottom: 4,
+  },
+  pickupToggleSubtitle: {
+    fontSize: 13,
+  },
+  toggleButton: {
+    width: 56,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.light.border,
+    padding: 2,
+    justifyContent: 'center' as const,
+  },
+  toggleCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleCircleActive: {
+    alignSelf: 'flex-end' as const,
+  },
+  pickupSection: {
+    backgroundColor: Colors.light.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: Colors.light.warning,
   },
   scrollView: {
     flex: 1,
