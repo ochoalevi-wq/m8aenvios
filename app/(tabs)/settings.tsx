@@ -1,13 +1,15 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal } from 'react-native';
 import { useAuth, UserRole, Credential, useMessengers, LicenseType, VehicleType } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
-import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car } from 'lucide-react-native';
+import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car, Moon, Sun } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SettingsScreen() {
   const { user, logo, updateLogo, companyName, updateCompanyName, credentials, addCredential, updateCredential, deleteCredential, toggleAvailability } = useAuth();
   const messengers = useMessengers();
+  const { themeMode, toggleTheme, colors } = useTheme();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
   const [formUsername, setFormUsername] = useState<string>('');
@@ -196,30 +198,68 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.contentContainer}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.userInfo}>
-          <View style={styles.userAvatar}>
+          <View style={[styles.userAvatar, { backgroundColor: colors.primary }]}>
             <UserIcon color="#FFFFFF" size={32} />
           </View>
           <View>
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userRole}>
+            <Text style={[styles.userName, { color: colors.text }]}>{user?.name}</Text>
+            <Text style={[styles.userRole, { color: colors.muted }]}>
               {user?.role === 'admin' ? 'Administrador' : user?.role === 'messenger' ? 'Mensajero' : 'Agendador'}
             </Text>
           </View>
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Apariencia</Text>
+        <Text style={[styles.sectionDescription, { color: colors.muted }]}>
+          Cambia entre modo claro y oscuro
+        </Text>
+
+        <View style={[styles.themeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.themeHeader}>
+            <View style={[styles.themeIconContainer, { backgroundColor: themeMode === 'dark' ? '#1E293B' : '#DBEAFE' }]}>
+              {themeMode === 'dark' ? (
+                <Moon color={colors.primary} size={24} />
+              ) : (
+                <Sun color={colors.primary} size={24} />
+              )}
+            </View>
+            <View style={styles.themeInfo}>
+              <Text style={[styles.themeTitle, { color: colors.text }]}>Tema de la Aplicación</Text>
+              <Text style={[styles.themeSubtitle, { color: colors.muted }]}>
+                {themeMode === 'dark' ? 'Modo Oscuro Activado' : 'Modo Claro Activado'}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.themeToggle,
+              { backgroundColor: themeMode === 'dark' ? colors.primary : colors.border },
+            ]}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.themeToggleThumb,
+              themeMode === 'dark' && styles.themeToggleThumbActive,
+            ]} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {isMessenger && currentMessenger && (
-        <View style={styles.availabilityCard}>
+        <View style={[styles.availabilityCard, { backgroundColor: colors.card }]}>
           <View style={styles.availabilityHeader}>
-            <View style={styles.availabilityIconContainer}>
-              <UserIcon color={Colors.light.primary} size={24} />
+            <View style={[styles.availabilityIconContainer, { backgroundColor: themeMode === 'dark' ? '#1E3A8A' : '#DBEAFE' }]}>
+              <UserIcon color={colors.primary} size={24} />
             </View>
             <View style={styles.availabilityInfo}>
-              <Text style={styles.availabilityTitle}>Estado de Disponibilidad</Text>
-              <Text style={styles.availabilitySubtitle}>
+              <Text style={[styles.availabilityTitle, { color: colors.text }]}>Estado de Disponibilidad</Text>
+              <Text style={[styles.availabilitySubtitle, { color: colors.muted }]}>
                 {currentMessenger.isAvailable 
                   ? 'Estás disponible para recibir asignaciones' 
                   : 'No estás disponible para recibir asignaciones'}
@@ -229,7 +269,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[
               styles.availabilityToggle,
-              currentMessenger.isAvailable && styles.availabilityToggleActive,
+              { backgroundColor: currentMessenger.isAvailable ? '#10B981' : colors.border },
             ]}
             onPress={() => toggleAvailability(user!.id)}
             activeOpacity={0.7}
@@ -241,15 +281,15 @@ export default function SettingsScreen() {
           </TouchableOpacity>
           <View style={[
             styles.availabilityStatus,
-            currentMessenger.isAvailable && styles.availabilityStatusActive,
+            { backgroundColor: currentMessenger.isAvailable ? '#D1FAE5' : colors.background },
           ]}>
             <View style={[
               styles.availabilityStatusDot,
-              currentMessenger.isAvailable && styles.availabilityStatusDotActive,
+              { backgroundColor: currentMessenger.isAvailable ? '#10B981' : colors.muted },
             ]} />
             <Text style={[
               styles.availabilityStatusText,
-              currentMessenger.isAvailable && styles.availabilityStatusTextActive,
+              { color: currentMessenger.isAvailable ? '#10B981' : colors.muted },
             ]}>
               {currentMessenger.isAvailable ? 'Disponible' : 'No Disponible'}
             </Text>
@@ -258,15 +298,16 @@ export default function SettingsScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Información de la Empresa</Text>
-        <Text style={styles.sectionDescription}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Información de la Empresa</Text>
+        <Text style={[styles.sectionDescription, { color: colors.muted }]}>
           Personaliza tu aplicación con el logo y nombre de tu empresa
         </Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Nombre de la Empresa</Text>
+          <Text style={[styles.formLabel, { color: colors.text }]}>Nombre de la Empresa</Text>
           <TextInput
-            style={styles.formInput}
+            style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+            placeholderTextColor={colors.muted}
             placeholder="Ingresa el nombre de tu empresa"
             value={editingCompanyName}
             onChangeText={setEditingCompanyName}
@@ -274,18 +315,18 @@ export default function SettingsScreen() {
             autoCorrect={false}
           />
           <TouchableOpacity 
-            style={styles.saveNameButton}
+            style={[styles.saveNameButton, { backgroundColor: colors.primary }]}
             onPress={() => updateCompanyName(editingCompanyName)}
           >
             <Text style={styles.saveNameButtonText}>Guardar Nombre</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.subSectionTitle}>Logo de la Empresa</Text>
+        <Text style={[styles.subSectionTitle, { color: colors.text }]}>Logo de la Empresa</Text>
 
         <View style={styles.logoContainer}>
           {logo ? (
-            <View style={styles.logoPreviewContainer}>
+            <View style={[styles.logoPreviewContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Image 
                 source={{ uri: logo }} 
                 style={styles.logoPreview}
@@ -299,15 +340,15 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.logoPlaceholder}>
-              <ImagePlus color={Colors.light.muted} size={48} />
-              <Text style={styles.logoPlaceholderText}>Sin logo</Text>
+            <View style={[styles.logoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <ImagePlus color={colors.muted} size={48} />
+              <Text style={[styles.logoPlaceholderText, { color: colors.muted }]}>Sin logo</Text>
             </View>
           )}
         </View>
 
         <TouchableOpacity 
-          style={styles.uploadButton}
+          style={[styles.uploadButton, { backgroundColor: colors.primary }]}
           onPress={pickImage}
         >
           <ImagePlus color="#FFFFFF" size={20} />
@@ -316,7 +357,7 @@ export default function SettingsScreen() {
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.helpText}>
+        <Text style={[styles.helpText, { color: colors.muted }]}>
           El logo se mostrará en el encabezado de la aplicación. Se recomienda usar una imagen cuadrada con fondo transparente.
         </Text>
       </View>
@@ -324,54 +365,54 @@ export default function SettingsScreen() {
       {isAdmin && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Gestión de Usuarios</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Gestión de Usuarios</Text>
             <TouchableOpacity 
-              style={styles.addButton}
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
               onPress={openAddModal}
             >
               <Plus color="#FFFFFF" size={20} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.sectionDescription}>
+          <Text style={[styles.sectionDescription, { color: colors.muted }]}>
             Agrega usuarios con contraseña para mensajeros y personal que agenda envíos
           </Text>
 
           {credentials.length === 0 ? (
             <View style={styles.emptyState}>
-              <Shield color={Colors.light.muted} size={48} />
-              <Text style={styles.emptyStateText}>No hay usuarios registrados</Text>
-              <Text style={styles.emptyStateSubtext}>Agrega el primer usuario para comenzar</Text>
+              <Shield color={colors.muted} size={48} />
+              <Text style={[styles.emptyStateText, { color: colors.text }]}>No hay usuarios registrados</Text>
+              <Text style={[styles.emptyStateSubtext, { color: colors.muted }]}>Agrega el primer usuario para comenzar</Text>
             </View>
           ) : (
             <View style={styles.credentialsList}>
               {credentials.map((credential) => (
-                <View key={credential.id} style={styles.credentialCard}>
-                  <View style={styles.credentialIcon}>
+                <View key={credential.id} style={[styles.credentialCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.credentialIcon, { backgroundColor: colors.background }]}>
                     {credential.role === 'admin' ? (
-                      <Shield color={Colors.light.primary} size={24} />
+                      <Shield color={colors.primary} size={24} />
                     ) : credential.role === 'messenger' ? (
-                      <UserIcon color={Colors.light.primary} size={24} />
+                      <UserIcon color={colors.primary} size={24} />
                     ) : (
-                      <Calendar color={Colors.light.primary} size={24} />
+                      <Calendar color={colors.primary} size={24} />
                     )}
                   </View>
                   <View style={styles.credentialInfo}>
-                    <Text style={styles.credentialUsername}>{credential.firstName} {credential.lastName}</Text>
-                    <Text style={styles.credentialRole}>
+                    <Text style={[styles.credentialUsername, { color: colors.text }]}>{credential.firstName} {credential.lastName}</Text>
+                    <Text style={[styles.credentialRole, { color: colors.muted }]}>
                       {credential.role === 'admin' ? 'Administrador' : credential.role === 'messenger' ? 'Mensajero' : 'Agendador'}
                     </Text>
-                    <Text style={styles.credentialPhone}>{credential.phoneNumber}</Text>
+                    <Text style={[styles.credentialPhone, { color: colors.muted }]}>{credential.phoneNumber}</Text>
                   </View>
                   <View style={styles.credentialActions}>
                     <TouchableOpacity
-                      style={styles.actionButton}
+                      style={[styles.actionButton, { backgroundColor: colors.background }]}
                       onPress={() => openEditModal(credential)}
                     >
-                      <Edit2 color={Colors.light.primary} size={18} />
+                      <Edit2 color={colors.primary} size={18} />
                     </TouchableOpacity>
                     {credential.id !== user?.id && (
                       <TouchableOpacity
-                        style={styles.actionButton}
+                        style={[styles.actionButton, { backgroundColor: colors.background }]}
                         onPress={() => handleDeleteCredential(credential)}
                       >
                         <Trash2 color="#EF4444" size={18} />
@@ -392,13 +433,13 @@ export default function SettingsScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {editingCredential ? 'Editar Usuario' : 'Agregar Usuario'}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X color={Colors.light.text} size={24} />
+                <X color={colors.text} size={24} />
               </TouchableOpacity>
             </View>
 
@@ -409,9 +450,10 @@ export default function SettingsScreen() {
               bounces={true}
             >
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Nombre</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Nombre</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholderTextColor={colors.muted}
                   placeholder="Ingresa el nombre"
                   value={formFirstName}
                   onChangeText={setFormFirstName}
@@ -421,9 +463,10 @@ export default function SettingsScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Apellido</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Apellido</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholderTextColor={colors.muted}
                   placeholder="Ingresa el apellido"
                   value={formLastName}
                   onChangeText={setFormLastName}
@@ -433,11 +476,12 @@ export default function SettingsScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Número de Teléfono</Text>
-                <View style={styles.phoneInputContainer}>
-                  <Text style={styles.phonePrefix}>+502</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Número de Teléfono</Text>
+                <View style={[styles.phoneInputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <Text style={[styles.phonePrefix, { color: colors.primary }]}>+502</Text>
                   <TextInput
-                    style={styles.phoneInputField}
+                    style={[styles.phoneInputField, { color: colors.text }]}
+                    placeholderTextColor={colors.muted}
                     placeholder="Ingresa el número de teléfono"
                     value={formPhoneNumber}
                     onChangeText={setFormPhoneNumber}
@@ -448,22 +492,24 @@ export default function SettingsScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Nombre de Usuario</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Nombre de Usuario</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholderTextColor={colors.muted}
                   placeholder="Mínimo 3 caracteres"
                   value={formUsername}
                   onChangeText={setFormUsername}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <Text style={styles.formHint}>Este será el nombre para iniciar sesión</Text>
+                <Text style={[styles.formHint, { color: colors.muted }]}>Este será el nombre para iniciar sesión</Text>
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Contraseña</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Contraseña</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                  placeholderTextColor={colors.muted}
                   placeholder="Mínimo 4 caracteres"
                   value={formPassword}
                   onChangeText={setFormPassword}
@@ -471,15 +517,16 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <Text style={styles.formHint}>Asegúrate de compartir esta contraseña de forma segura</Text>
+                <Text style={[styles.formHint, { color: colors.muted }]}>Asegúrate de compartir esta contraseña de forma segura</Text>
               </View>
 
               {formRole === 'messenger' && (
                 <>
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Edad</Text>
+                    <Text style={[styles.formLabel, { color: colors.text }]}>Edad</Text>
                     <TextInput
-                      style={styles.formInput}
+                      style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                      placeholderTextColor={colors.muted}
                       placeholder="Ingresa la edad"
                       value={formAge}
                       onChangeText={setFormAge}
@@ -489,24 +536,24 @@ export default function SettingsScreen() {
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Tipo de Licencia</Text>
+                    <Text style={[styles.formLabel, { color: colors.text }]}>Tipo de Licencia</Text>
                     <View style={styles.licenseSelector}>
                       {(['A', 'B', 'C', 'M'] as LicenseType[]).map((type) => (
                         <TouchableOpacity
                           key={type}
                           style={[
                             styles.licenseOption,
-                            formLicenseType === type && styles.licenseOptionActive,
+                            { backgroundColor: formLicenseType === type ? colors.primary : colors.background, borderColor: formLicenseType === type ? colors.primary : colors.border },
                           ]}
                           onPress={() => setFormLicenseType(type)}
                         >
                           <CreditCard 
-                            color={formLicenseType === type ? '#FFFFFF' : Colors.light.muted} 
+                            color={formLicenseType === type ? '#FFFFFF' : colors.muted} 
                             size={20} 
                           />
                           <Text style={[
                             styles.licenseOptionText,
-                            formLicenseType === type && styles.licenseOptionTextActive,
+                            { color: formLicenseType === type ? '#FFFFFF' : colors.text },
                           ]}>
                             Tipo {type}
                           </Text>
@@ -516,22 +563,22 @@ export default function SettingsScreen() {
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={styles.formLabel}>Tipo de Vehículo</Text>
+                    <Text style={[styles.formLabel, { color: colors.text }]}>Tipo de Vehículo</Text>
                     <View style={styles.vehicleSelector}>
                       <TouchableOpacity
                         style={[
                           styles.vehicleOption,
-                          formVehicleType === 'moto' && styles.vehicleOptionActive,
+                          { backgroundColor: formVehicleType === 'moto' ? colors.primary : colors.background, borderColor: formVehicleType === 'moto' ? colors.primary : colors.border },
                         ]}
                         onPress={() => setFormVehicleType('moto')}
                       >
                         <Car 
-                          color={formVehicleType === 'moto' ? '#FFFFFF' : Colors.light.muted} 
+                          color={formVehicleType === 'moto' ? '#FFFFFF' : colors.muted} 
                           size={20} 
                         />
                         <Text style={[
                           styles.vehicleOptionText,
-                          formVehicleType === 'moto' && styles.vehicleOptionTextActive,
+                          { color: formVehicleType === 'moto' ? '#FFFFFF' : colors.text },
                         ]}>
                           Motocicleta
                         </Text>
@@ -540,17 +587,17 @@ export default function SettingsScreen() {
                       <TouchableOpacity
                         style={[
                           styles.vehicleOption,
-                          formVehicleType === 'carro' && styles.vehicleOptionActive,
+                          { backgroundColor: formVehicleType === 'carro' ? colors.primary : colors.background, borderColor: formVehicleType === 'carro' ? colors.primary : colors.border },
                         ]}
                         onPress={() => setFormVehicleType('carro')}
                       >
                         <Car 
-                          color={formVehicleType === 'carro' ? '#FFFFFF' : Colors.light.muted} 
+                          color={formVehicleType === 'carro' ? '#FFFFFF' : colors.muted} 
                           size={20} 
                         />
                         <Text style={[
                           styles.vehicleOptionText,
-                          formVehicleType === 'carro' && styles.vehicleOptionTextActive,
+                          { color: formVehicleType === 'carro' ? '#FFFFFF' : colors.text },
                         ]}>
                           Automóvil
                         </Text>
@@ -559,17 +606,17 @@ export default function SettingsScreen() {
                       <TouchableOpacity
                         style={[
                           styles.vehicleOption,
-                          formVehicleType === 'camion' && styles.vehicleOptionActive,
+                          { backgroundColor: formVehicleType === 'camion' ? colors.primary : colors.background, borderColor: formVehicleType === 'camion' ? colors.primary : colors.border },
                         ]}
                         onPress={() => setFormVehicleType('camion')}
                       >
                         <Car 
-                          color={formVehicleType === 'camion' ? '#FFFFFF' : Colors.light.muted} 
+                          color={formVehicleType === 'camion' ? '#FFFFFF' : colors.muted} 
                           size={20} 
                         />
                         <Text style={[
                           styles.vehicleOptionText,
-                          formVehicleType === 'camion' && styles.vehicleOptionTextActive,
+                          { color: formVehicleType === 'camion' ? '#FFFFFF' : colors.text },
                         ]}>
                           Camión
                         </Text>
@@ -580,30 +627,30 @@ export default function SettingsScreen() {
               )}
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Rol del Usuario</Text>
-                <Text style={styles.formHint}>Selecciona el tipo de acceso que tendrá este usuario</Text>
+                <Text style={[styles.formLabel, { color: colors.text }]}>Rol del Usuario</Text>
+                <Text style={[styles.formHint, { color: colors.muted }]}>Selecciona el tipo de acceso que tendrá este usuario</Text>
                 <View style={styles.roleSelector}>
                   <TouchableOpacity
                     style={[
                       styles.roleOption,
-                      formRole === 'admin' && styles.roleOptionActive,
+                      { backgroundColor: formRole === 'admin' ? colors.primary : colors.background, borderColor: formRole === 'admin' ? colors.primary : colors.border },
                     ]}
                     onPress={() => setFormRole('admin')}
                   >
                     <View style={styles.roleOptionContent}>
                       <Shield 
-                        color={formRole === 'admin' ? '#FFFFFF' : Colors.light.muted} 
+                        color={formRole === 'admin' ? '#FFFFFF' : colors.muted} 
                         size={20} 
                       />
                       <Text style={[
                         styles.roleOptionText,
-                        formRole === 'admin' && styles.roleOptionTextActive,
+                        { color: formRole === 'admin' ? '#FFFFFF' : colors.text },
                       ]}>
                         Administrador
                       </Text>
                       <Text style={[
                         styles.roleOptionDescription,
-                        formRole === 'admin' && styles.roleOptionDescriptionActive,
+                        { color: formRole === 'admin' ? 'rgba(255, 255, 255, 0.8)' : colors.muted },
                       ]}>
                         Acceso completo
                       </Text>
@@ -613,24 +660,24 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     style={[
                       styles.roleOption,
-                      formRole === 'messenger' && styles.roleOptionActive,
+                      { backgroundColor: formRole === 'messenger' ? colors.primary : colors.background, borderColor: formRole === 'messenger' ? colors.primary : colors.border },
                     ]}
                     onPress={() => setFormRole('messenger')}
                   >
                     <View style={styles.roleOptionContent}>
                       <UserIcon 
-                        color={formRole === 'messenger' ? '#FFFFFF' : Colors.light.muted} 
+                        color={formRole === 'messenger' ? '#FFFFFF' : colors.muted} 
                         size={20} 
                       />
                       <Text style={[
                         styles.roleOptionText,
-                        formRole === 'messenger' && styles.roleOptionTextActive,
+                        { color: formRole === 'messenger' ? '#FFFFFF' : colors.text },
                       ]}>
                         Mensajero
                       </Text>
                       <Text style={[
                         styles.roleOptionDescription,
-                        formRole === 'messenger' && styles.roleOptionDescriptionActive,
+                        { color: formRole === 'messenger' ? 'rgba(255, 255, 255, 0.8)' : colors.muted },
                       ]}>
                         Gestiona entregas
                       </Text>
@@ -640,24 +687,24 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     style={[
                       styles.roleOption,
-                      formRole === 'scheduler' && styles.roleOptionActive,
+                      { backgroundColor: formRole === 'scheduler' ? colors.primary : colors.background, borderColor: formRole === 'scheduler' ? colors.primary : colors.border },
                     ]}
                     onPress={() => setFormRole('scheduler')}
                   >
                     <View style={styles.roleOptionContent}>
                       <Calendar 
-                        color={formRole === 'scheduler' ? '#FFFFFF' : Colors.light.muted} 
+                        color={formRole === 'scheduler' ? '#FFFFFF' : colors.muted} 
                         size={20} 
                       />
                       <Text style={[
                         styles.roleOptionText,
-                        formRole === 'scheduler' && styles.roleOptionTextActive,
+                        { color: formRole === 'scheduler' ? '#FFFFFF' : colors.text },
                       ]}>
                         Agendador
                       </Text>
                       <Text style={[
                         styles.roleOptionDescription,
-                        formRole === 'scheduler' && styles.roleOptionDescriptionActive,
+                        { color: formRole === 'scheduler' ? 'rgba(255, 255, 255, 0.8)' : colors.muted },
                       ]}>
                         Crea envíos
                       </Text>
@@ -667,15 +714,15 @@ export default function SettingsScreen() {
               </View>
             </ScrollView>
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
               <TouchableOpacity
-                style={styles.cancelButton}
+                style={[styles.cancelButton, { borderColor: colors.border }]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                <Text style={[styles.cancelButtonText, { color: colors.text }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.saveButton}
+                style={[styles.saveButton, { backgroundColor: colors.primary }]}
                 onPress={handleSaveCredential}
               >
                 <Text style={styles.saveButtonText}>Guardar</Text>
@@ -691,16 +738,13 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
   },
   contentContainer: {
     paddingBottom: 40,
   },
   header: {
-    backgroundColor: Colors.light.card,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
   },
   userInfo: {
     flexDirection: 'row' as const,
@@ -711,19 +755,16 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.light.primary,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
   userName: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.light.text,
     marginBottom: 4,
   },
   userRole: {
     fontSize: 14,
-    color: Colors.light.muted,
   },
   section: {
     padding: 20,
@@ -731,12 +772,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.light.text,
     marginBottom: 8,
   },
   sectionDescription: {
     fontSize: 14,
-    color: Colors.light.muted,
     marginBottom: 24,
   },
   logoContainer: {
@@ -747,10 +786,8 @@ const styles = StyleSheet.create({
     position: 'relative' as const,
     width: 200,
     height: 200,
-    backgroundColor: Colors.light.card,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: Colors.light.border,
     borderStyle: 'dashed' as const,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
@@ -779,10 +816,8 @@ const styles = StyleSheet.create({
   logoPlaceholder: {
     width: 200,
     height: 200,
-    backgroundColor: Colors.light.card,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: Colors.light.border,
     borderStyle: 'dashed' as const,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
@@ -790,10 +825,8 @@ const styles = StyleSheet.create({
   },
   logoPlaceholderText: {
     fontSize: 14,
-    color: Colors.light.muted,
   },
   uploadButton: {
-    backgroundColor: Colors.light.primary,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
@@ -809,19 +842,16 @@ const styles = StyleSheet.create({
   },
   helpText: {
     fontSize: 13,
-    color: Colors.light.muted,
     textAlign: 'center' as const,
     lineHeight: 20,
   },
   subSectionTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.light.text,
     marginTop: 24,
     marginBottom: 16,
   },
   saveNameButton: {
-    backgroundColor: Colors.light.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 10,
@@ -843,7 +873,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.light.primary,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -855,11 +884,9 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.light.text,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.light.muted,
   },
   credentialsList: {
     gap: 12,
@@ -867,18 +894,15 @@ const styles = StyleSheet.create({
   credentialCard: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: Colors.light.card,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     gap: 12,
   },
   credentialIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.light.background,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -888,17 +912,14 @@ const styles = StyleSheet.create({
   credentialUsername: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.light.text,
     marginBottom: 4,
   },
   credentialRole: {
     fontSize: 14,
-    color: Colors.light.muted,
     marginBottom: 2,
   },
   credentialPhone: {
     fontSize: 13,
-    color: Colors.light.muted,
   },
   credentialActions: {
     flexDirection: 'row' as const,
@@ -908,7 +929,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: Colors.light.background,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -918,7 +938,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end' as const,
   },
   modalContent: {
-    backgroundColor: Colors.light.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
@@ -929,12 +948,10 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.light.border,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.light.text,
   },
   modalScrollView: {
     maxHeight: 500,
@@ -949,20 +966,15 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.light.text,
   },
   formInput: {
-    backgroundColor: Colors.light.background,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.light.text,
   },
   formHint: {
     fontSize: 12,
-    color: Colors.light.muted,
     marginTop: 4,
   },
   roleSelector: {
@@ -974,60 +986,45 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    backgroundColor: Colors.light.background,
   },
   roleOptionContent: {
     alignItems: 'center' as const,
     gap: 8,
   },
-  roleOptionActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
+
   roleOptionText: {
     fontSize: 13,
     fontWeight: '700' as const,
-    color: Colors.light.text,
     textAlign: 'center' as const,
   },
-  roleOptionTextActive: {
-    color: '#FFFFFF',
-  },
+
   roleOptionDescription: {
     fontSize: 11,
-    color: Colors.light.muted,
     textAlign: 'center' as const,
   },
-  roleOptionDescriptionActive: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
+
   modalFooter: {
     flexDirection: 'row' as const,
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
   },
   cancelButton: {
     flex: 1,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     alignItems: 'center' as const,
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.light.text,
   },
   saveButton: {
     flex: 1,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: Colors.light.primary,
     alignItems: 'center' as const,
   },
   saveButtonText: {
@@ -1036,7 +1033,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   availabilityCard: {
-    backgroundColor: Colors.light.card,
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 20,
@@ -1057,7 +1053,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#DBEAFE',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -1067,26 +1062,21 @@ const styles = StyleSheet.create({
   availabilityTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.light.text,
     marginBottom: 4,
   },
   availabilitySubtitle: {
     fontSize: 13,
-    color: Colors.light.muted,
     lineHeight: 18,
   },
   availabilityToggle: {
     width: '100%',
     height: 56,
-    backgroundColor: Colors.light.border,
     borderRadius: 28,
     padding: 4,
     justifyContent: 'center' as const,
     marginBottom: 16,
   },
-  availabilityToggleActive: {
-    backgroundColor: '#10B981',
-  },
+
   availabilityToggleThumb: {
     width: 48,
     height: 48,
@@ -1108,28 +1098,75 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    backgroundColor: Colors.light.background,
     borderRadius: 12,
   },
-  availabilityStatusActive: {
-    backgroundColor: '#D1FAE5',
-  },
+
   availabilityStatusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.light.muted,
   },
-  availabilityStatusDotActive: {
-    backgroundColor: '#10B981',
-  },
+
   availabilityStatusText: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.light.muted,
   },
-  availabilityStatusTextActive: {
-    color: '#10B981',
+
+  themeCard: {
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  themeHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 16,
+    marginBottom: 20,
+  },
+  themeIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  themeInfo: {
+    flex: 1,
+  },
+  themeTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  themeSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  themeToggle: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    padding: 4,
+    justifyContent: 'center' as const,
+  },
+  themeToggleThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  themeToggleThumbActive: {
+    alignSelf: 'flex-end' as const,
   },
   licenseSelector: {
     flexDirection: 'row' as const,
@@ -1144,21 +1181,13 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    backgroundColor: Colors.light.background,
   },
-  licenseOptionActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
+
   licenseOptionText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.light.text,
   },
-  licenseOptionTextActive: {
-    color: '#FFFFFF',
-  },
+
   vehicleSelector: {
     flexDirection: 'row' as const,
     gap: 8,
@@ -1172,41 +1201,29 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.light.border,
-    backgroundColor: Colors.light.background,
   },
-  vehicleOptionActive: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
-  },
+
   vehicleOptionText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.light.text,
     textAlign: 'center' as const,
   },
-  vehicleOptionTextActive: {
-    color: '#FFFFFF',
-  },
+
   phoneInputContainer: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: Colors.light.background,
     borderWidth: 1,
-    borderColor: Colors.light.border,
     borderRadius: 12,
     paddingLeft: 16,
   },
   phonePrefix: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.light.primary,
     marginRight: 8,
   },
   phoneInputField: {
     flex: 1,
     padding: 16,
     fontSize: 16,
-    color: Colors.light.text,
   },
 });
