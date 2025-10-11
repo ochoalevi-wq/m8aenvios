@@ -507,9 +507,27 @@ export default function DeliveriesScreen() {
 
               <View style={styles.cardBody}>
                 <View style={styles.personSection}>
-                  <Text style={styles.personLabel}>De:</Text>
-                  <Text style={styles.personName}>{delivery.sender.name}</Text>
-                  <Text style={styles.personDetail}>{delivery.sender.phone}</Text>
+                  <View style={styles.personHeader}>
+                    <View style={styles.personInfo}>
+                      <Text style={styles.personLabel}>De:</Text>
+                      <Text style={styles.personName}>{delivery.sender.name}</Text>
+                      <Text style={styles.personDetail}>{delivery.sender.phone}</Text>
+                    </View>
+                    <View style={styles.contactButtons}>
+                      <TouchableOpacity
+                        style={styles.whatsappButton}
+                        onPress={() => handleWhatsAppReceiver(delivery.sender.phone)}
+                      >
+                        <MessageCircle color="#FFFFFF" size={18} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.callButton}
+                        onPress={() => handleCallReceiver(delivery.sender.phone)}
+                      >
+                        <Phone color="#FFFFFF" size={18} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
 
                 <View style={styles.arrowContainer}>
