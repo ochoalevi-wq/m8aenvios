@@ -75,6 +75,10 @@ export default function DeliveriesScreen() {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
+            @page {
+              size: 5.5in 8.5in;
+              margin: 0;
+            }
             * {
               margin: 0;
               padding: 0;
@@ -82,86 +86,100 @@ export default function DeliveriesScreen() {
             }
             body {
               font-family: 'Helvetica', 'Arial', sans-serif;
-              padding: 40px;
               background: white;
               color: #1a1a1a;
+              width: 5.5in;
+              min-height: 8.5in;
+              margin: 0 auto;
             }
             .receipt {
-              max-width: 800px;
-              margin: 0 auto;
-              border: 2px solid #2563eb;
-              border-radius: 12px;
-              overflow: hidden;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              flex-direction: column;
             }
             .header {
               background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
               color: white;
-              padding: 30px;
+              padding: 16px;
               text-align: center;
             }
             .header h1 {
-              font-size: 32px;
-              margin-bottom: 8px;
+              font-size: 20px;
+              margin-bottom: 4px;
               font-weight: 700;
             }
             .header p {
-              font-size: 16px;
+              font-size: 11px;
               opacity: 0.95;
             }
             .content {
-              padding: 30px;
+              padding: 16px;
+              flex: 1;
             }
             .receipt-id {
               text-align: center;
-              padding: 20px;
+              padding: 12px;
               background: #f8fafc;
-              border-radius: 8px;
-              margin-bottom: 30px;
+              border-radius: 6px;
+              margin-bottom: 16px;
+              border: 2px dashed #2563eb;
             }
             .receipt-id strong {
-              font-size: 24px;
+              font-size: 18px;
               color: #2563eb;
               font-weight: 700;
             }
             .section {
-              margin-bottom: 30px;
+              margin-bottom: 16px;
             }
             .section-title {
-              font-size: 14px;
+              font-size: 10px;
               color: #64748b;
               text-transform: uppercase;
-              letter-spacing: 1px;
-              margin-bottom: 12px;
+              letter-spacing: 0.5px;
+              margin-bottom: 8px;
               font-weight: 600;
+              border-bottom: 1px solid #e2e8f0;
+              padding-bottom: 4px;
             }
-            .info-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 20px;
-              margin-bottom: 20px;
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 12px;
+              gap: 8px;
             }
             .info-box {
+              flex: 1;
               background: #f8fafc;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #2563eb;
+              padding: 10px;
+              border-radius: 6px;
+              border-left: 3px solid #2563eb;
             }
             .info-label {
-              font-size: 12px;
+              font-size: 9px;
               color: #64748b;
-              margin-bottom: 6px;
+              margin-bottom: 4px;
               font-weight: 600;
+              text-transform: uppercase;
             }
             .info-value {
-              font-size: 16px;
+              font-size: 12px;
               color: #1a1a1a;
               font-weight: 600;
+              line-height: 1.3;
+            }
+            .info-detail {
+              font-size: 10px;
+              color: #64748b;
+              margin-top: 3px;
+              line-height: 1.3;
             }
             .status-badge {
               display: inline-block;
-              padding: 8px 16px;
-              border-radius: 20px;
-              font-size: 14px;
+              padding: 4px 10px;
+              border-radius: 12px;
+              font-size: 10px;
               font-weight: 600;
             }
             .status-pending {
@@ -179,39 +197,45 @@ export default function DeliveriesScreen() {
             .cost-table {
               width: 100%;
               border-collapse: collapse;
-              margin-top: 20px;
+              margin-top: 8px;
             }
             .cost-table tr {
               border-bottom: 1px solid #e2e8f0;
             }
             .cost-table td {
-              padding: 16px;
-              font-size: 16px;
+              padding: 8px 4px;
+              font-size: 11px;
+            }
+            .cost-table td:first-child {
+              color: #64748b;
             }
             .cost-table td:last-child {
               text-align: right;
               font-weight: 600;
+              color: #1a1a1a;
             }
             .cost-table .total-row {
               background: #f8fafc;
               font-weight: 700;
-              font-size: 20px;
+              font-size: 14px;
               color: #2563eb;
             }
+            .cost-table .total-row td {
+              padding: 10px 4px;
+            }
             .footer {
-              margin-top: 40px;
-              padding-top: 20px;
+              margin-top: 16px;
+              padding-top: 12px;
               border-top: 2px dashed #cbd5e1;
               text-align: center;
               color: #64748b;
-              font-size: 14px;
+              font-size: 9px;
             }
             .description-box {
               background: #fef9e7;
-              padding: 16px;
-              border-radius: 8px;
-              border-left: 4px solid #f59e0b;
-              margin-top: 20px;
+              padding: 10px;
+              border-radius: 6px;
+              border-left: 3px solid #f59e0b;
             }
             .description-box .info-label {
               color: #92400e;
@@ -219,14 +243,20 @@ export default function DeliveriesScreen() {
             .description-box .info-value {
               color: #78350f;
               font-weight: 500;
+              font-size: 11px;
+            }
+            .delivery-info {
+              display: flex;
+              gap: 8px;
+              margin-bottom: 12px;
             }
             @media print {
               body {
-                padding: 0;
+                width: 5.5in;
+                height: 8.5in;
               }
               .receipt {
-                border: none;
-                border-radius: 0;
+                page-break-after: always;
               }
             }
           </style>
@@ -234,7 +264,7 @@ export default function DeliveriesScreen() {
         <body>
           <div class="receipt">
             <div class="header">
-              <h1>📦 Boleta de Envío</h1>
+              <h1>📦 BOLETA DE ENVÍO</h1>
               <p>Sistema de Gestión de Paquetes</p>
             </div>
             
@@ -244,48 +274,42 @@ export default function DeliveriesScreen() {
               </div>
 
               <div class="section">
-                <div class="section-title">Información del Envío</div>
-                <div style="margin-bottom: 12px;">
-                  <span class="info-label">Estado:</span>
+                <div class="section-title">Estado y Fecha</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span class="status-badge status-${delivery.status}">
                     ${STATUS_LABELS[delivery.status]}
                   </span>
-                </div>
-                <div>
-                  <span class="info-label">Fecha:</span>
-                  <span class="info-value">${date}</span>
+                  <span style="font-size: 10px; color: #64748b;">${date}</span>
                 </div>
               </div>
 
               <div class="section">
-                <div class="section-title">Detalles de Envío</div>
-                <div class="info-grid">
-                  <div class="info-box">
-                    <div class="info-label">Remitente</div>
-                    <div class="info-value">${delivery.sender.name}</div>
-                    <div style="font-size: 14px; color: #64748b; margin-top: 4px;">${delivery.sender.phone}</div>
-                    <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">${delivery.sender.address}</div>
-                  </div>
-                  
-                  <div class="info-box">
-                    <div class="info-label">Destinatario</div>
-                    <div class="info-value">${delivery.receiver.name}</div>
-                    <div style="font-size: 14px; color: #64748b; margin-top: 4px;">${delivery.receiver.phone}</div>
-                    <div style="font-size: 13px; color: #94a3b8; margin-top: 4px;">${delivery.receiver.address}</div>
-                  </div>
+                <div class="section-title">Remitente</div>
+                <div class="info-box">
+                  <div class="info-value">${delivery.sender.name}</div>
+                  <div class="info-detail">📞 ${delivery.sender.phone}</div>
+                  <div class="info-detail">📍 ${delivery.sender.address}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Destinatario</div>
+                <div class="info-box">
+                  <div class="info-value">${delivery.receiver.name}</div>
+                  <div class="info-detail">📞 ${delivery.receiver.phone}</div>
+                  <div class="info-detail">📍 ${delivery.receiver.address}</div>
                 </div>
               </div>
 
               <div class="section">
                 <div class="section-title">Información de Entrega</div>
-                <div class="info-grid">
+                <div class="delivery-info">
                   <div class="info-box">
                     <div class="info-label">Mensajero</div>
                     <div class="info-value">${delivery.messenger}</div>
                   </div>
-                  
                   <div class="info-box">
-                    <div class="info-label">Zona de Entrega</div>
+                    <div class="info-label">Zona</div>
                     <div class="info-value">${ZONE_LABELS[delivery.zone]}</div>
                   </div>
                 </div>
@@ -293,8 +317,8 @@ export default function DeliveriesScreen() {
 
               ${delivery.description ? `
                 <div class="section">
+                  <div class="section-title">Descripción del Paquete</div>
                   <div class="description-box">
-                    <div class="info-label">Descripción del Paquete</div>
                     <div class="info-value">${delivery.description}</div>
                   </div>
                 </div>
@@ -312,15 +336,15 @@ export default function DeliveriesScreen() {
                     <td>Q ${delivery.shippingCost.toFixed(2)}</td>
                   </tr>
                   <tr class="total-row">
-                    <td>TOTAL</td>
+                    <td>TOTAL A PAGAR</td>
                     <td>Q ${total.toFixed(2)}</td>
                   </tr>
                 </table>
               </div>
 
               <div class="footer">
-                <p>Gracias por confiar en nuestro servicio de mensajería</p>
-                <p style="margin-top: 8px; font-size: 12px;">Este documento es una boleta oficial de envío</p>
+                <p style="font-weight: 600; margin-bottom: 4px;">Gracias por confiar en nuestro servicio</p>
+                <p>Este documento es una boleta oficial de envío</p>
               </div>
             </div>
           </div>
