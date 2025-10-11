@@ -1,5 +1,5 @@
 import { useFilteredDeliveries, useDeliveries } from '@/contexts/DeliveryContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS, type DeliveryStatus, type Zone, type Delivery } from '@/types/delivery';
 import { useState, useMemo } from 'react';
@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 
 export default function DeliveriesScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, credentials } = useAuth();
   const isMessenger = user?.role === 'messenger';
   const canAssign = user?.role === 'admin' || user?.role === 'scheduler';
   const [search, setSearch] = useState<string>('');
@@ -393,6 +393,12 @@ export default function DeliveriesScreen() {
       });
   };
 
+  const getMessengerPhone = (messengerId?: string): string | null => {
+    if (!messengerId) return null;
+    const messenger = credentials.find(c => c.id === messengerId);
+    return messenger?.phoneNumber || null;
+  };
+
   const handlePrintReceipt = async (delivery: Delivery) => {
     try {
       const html = generateReceiptHTML(delivery);
@@ -586,7 +592,17 @@ export default function DeliveriesScreen() {
               <View style={styles.cardFooter}>
                 <View style={styles.messengerInfo}>
                   <Text style={styles.messengerLabel}>Mensajero:</Text>
-                  <Text style={styles.messengerName}>{delivery.messenger}</Text>
+                  <View style={styles.messengerNameRow}>
+                    <Text style={styles.messengerName}>{delivery.messenger}</Text>
+                    {!isMessenger && getMessengerPhone(delivery.messengerId) && (
+                      <TouchableOpacity
+                        style={styles.messengerWhatsappButton}
+                        onPress={() => handleWhatsAppReceiver(getMessengerPhone(delivery.messengerId)!)}
+                      >
+                        <MessageCircle color="#FFFFFF" size={16} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
                 <View style={styles.costInfo}>
                   <Text style={styles.costLabel}>Total:</Text>
@@ -889,10 +905,28 @@ const styles = StyleSheet.create({
     color: Colors.light.muted,
     marginBottom: 2,
   },
+  messengerNameRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+  },
   messengerName: {
     fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.light.text,
+  },
+  messengerWhatsappButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#25D366',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   costInfo: {
     alignItems: 'flex-end' as const,
