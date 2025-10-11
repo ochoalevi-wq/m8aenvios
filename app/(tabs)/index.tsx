@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS } from '@/types/delivery';
 import { useRouter } from 'expo-router';
-import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useMemo, useState } from 'react';
 
@@ -59,6 +59,11 @@ export default function DashboardScreen() {
 
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone}`);
+  };
+
+  const handleWhatsApp = (phone: string) => {
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    Linking.openURL(`https://wa.me/${cleanPhone}`);
   };
 
   const handleStatusChange = async (deliveryId: string, newStatus: 'in_transit' | 'delivered') => {
@@ -204,12 +209,20 @@ export default function DashboardScreen() {
                     <View style={styles.deliveryDetailRow}>
                       <Phone color={Colors.light.muted} size={16} />
                       <Text style={styles.deliveryDetailText}>{delivery.receiver.phone}</Text>
-                      <TouchableOpacity
-                        style={styles.callButton}
-                        onPress={() => handleCall(delivery.receiver.phone)}
-                      >
-                        <Text style={styles.callButtonText}>Llamar</Text>
-                      </TouchableOpacity>
+                      <View style={styles.contactButtons}>
+                        <TouchableOpacity
+                          style={styles.callButton}
+                          onPress={() => handleCall(delivery.receiver.phone)}
+                        >
+                          <Text style={styles.callButtonText}>Llamar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.whatsappButton}
+                          onPress={() => handleWhatsApp(delivery.receiver.phone)}
+                        >
+                          <MessageCircle color="#FFFFFF" size={14} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                     <View style={styles.deliveryDetailRow}>
                       <MapPin color={Colors.light.muted} size={16} />
@@ -802,17 +815,29 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.light.primary,
   },
+  contactButtons: {
+    flexDirection: 'row' as const,
+    gap: 8,
+    marginLeft: 'auto' as const,
+  },
   callButton: {
     backgroundColor: Colors.light.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    marginLeft: 'auto' as const,
   },
   callButtonText: {
     fontSize: 12,
     fontWeight: '600' as const,
     color: '#FFFFFF',
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   deliveryActions: {
     gap: 12,
