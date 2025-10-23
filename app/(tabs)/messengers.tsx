@@ -412,7 +412,7 @@ export default function MessengersScreen() {
               >
                 <View style={styles.cameraButtonInner} />
               </TouchableOpacity>
-              <View style={{ width: 80 }} />
+              <View style={styles.cameraPlaceholder} />
             </View>
           </CameraView>
         </View>
@@ -1582,6 +1582,9 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     backgroundColor: '#FFFFFF',
+  },
+  cameraPlaceholder: {
+    width: 80,
   },
   photosContainer: {
     flexDirection: 'row' as const,
