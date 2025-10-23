@@ -2,10 +2,9 @@ import { useFilteredDeliveries, useDeliveries } from '@/contexts/DeliveryContext
 import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS, type DeliveryStatus, type Zone, type Delivery } from '@/types/delivery';
-import { useState, useMemo } from 'react';
-import { Modal } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Linking } from 'react-native';
 import { Search, Filter, Package, Printer, CheckCircle, UserPlus, UserCog, Phone, MessageCircle, XCircle, Calendar } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Linking } from 'react-native';
 import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
 
@@ -689,29 +688,31 @@ export default function DeliveriesScreen() {
                       </View>
                     </View>
                   ) : (
-                    <View style={styles.messengerActionsRow}>
-                      <TouchableOpacity
-                        style={styles.deliveredButton}
-                        onPress={() => handleMarkAsDelivered(delivery)}
-                      >
-                        <CheckCircle color="#FFFFFF" size={18} />
-                        <Text style={styles.messengerActionText}>Entregado</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.rescheduleButton}
-                        onPress={() => handleReschedule(delivery)}
-                      >
-                        <Calendar color="#FFFFFF" size={18} />
-                        <Text style={styles.messengerActionText}>Reprogramar</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.notDeliveredButton}
-                        onPress={() => handleNotDelivered(delivery)}
-                      >
-                        <XCircle color="#FFFFFF" size={18} />
-                        <Text style={styles.messengerActionText}>No Entregado</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <React.Fragment>
+                      <View style={styles.messengerActionsRow}>
+                        <TouchableOpacity
+                          style={styles.deliveredButton}
+                          onPress={() => handleMarkAsDelivered(delivery)}
+                        >
+                          <CheckCircle color="#FFFFFF" size={18} />
+                          <Text style={styles.messengerActionText}>Entregado</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.rescheduleButton}
+                          onPress={() => handleReschedule(delivery)}
+                        >
+                          <Calendar color="#FFFFFF" size={18} />
+                          <Text style={styles.messengerActionText}>Reprogramar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.notDeliveredButton}
+                          onPress={() => handleNotDelivered(delivery)}
+                        >
+                          <XCircle color="#FFFFFF" size={18} />
+                          <Text style={styles.messengerActionText}>No Entregado</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </React.Fragment>
                   )
                 ) : (
                   <>
