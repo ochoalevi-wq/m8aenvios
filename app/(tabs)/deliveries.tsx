@@ -3,7 +3,8 @@ import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS, type DeliveryStatus, type Zone, type Delivery } from '@/types/delivery';
 import { useState, useMemo } from 'react';
-import { Search, Filter, Package, Printer, CheckCircle, UserPlus, UserCog, Phone, MessageCircle } from 'lucide-react-native';
+import { Modal } from 'react-native';
+import { Search, Filter, Package, Printer, CheckCircle, UserPlus, UserCog, Phone, MessageCircle, XCircle, Calendar } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Linking } from 'react-native';
 import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
@@ -17,8 +18,12 @@ export default function DeliveriesScreen() {
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | undefined>(undefined);
   const [zoneFilter, setZoneFilter] = useState<Zone | undefined>(undefined);
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [showNotDeliveredModal, setShowNotDeliveredModal] = useState<boolean>(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState<boolean>(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
+  const [notDeliveredReason, setNotDeliveredReason] = useState<string>('');
 
-  const { updateStatus } = useDeliveries();
+  const { updateStatus, updateDelivery } = useDeliveries();
   const allDeliveries = useFilteredDeliveries(statusFilter, zoneFilter, search);
   
   const deliveries = useMemo(() => {
@@ -56,6 +61,54 @@ export default function DeliveriesScreen() {
         },
       ]
     );
+  };
+
+  const handleNotDelivered = (delivery: Delivery) => {
+    setSelectedDelivery(delivery);
+    setNotDeliveredReason('');
+    setShowNotDeliveredModal(true);
+  };
+
+  const handleConfirmNotDelivered = async () => {
+    if (!selectedDelivery) return;
+
+    if (!notDeliveredReason.trim()) {
+      Alert.alert('Campo Requerido', 'Por favor ingresa el motivo por el cual no se entregó el paquete.');
+      return;
+    }
+
+    try {
+      await updateDelivery(selectedDelivery.id, {
+        status: 'not_delivered',
+        notDeliveredReason: notDeliveredReason.trim(),
+      });
+      setShowNotDeliveredModal(false);
+      setSelectedDelivery(null);
+      setNotDeliveredReason('');
+      Alert.alert('Actualizado', 'El envío ha sido marcado como no entregado.');
+    } catch (error) {
+      console.error('Error updating delivery:', error);
+      Alert.alert('Error', 'No se pudo actualizar el estado del envío.');
+    }
+  };
+
+  const handleReschedule = (delivery: Delivery) => {
+    setSelectedDelivery(delivery);
+    setShowRescheduleModal(true);
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!selectedDelivery) return;
+
+    try {
+      await updateStatus(selectedDelivery.id, 'rescheduled');
+      setShowRescheduleModal(false);
+      setSelectedDelivery(null);
+      Alert.alert('Actualizado', 'El envío ha sido reprogramado.');
+    } catch (error) {
+      console.error('Error rescheduling delivery:', error);
+      Alert.alert('Error', 'No se pudo reprogramar el envío.');
+    }
   };
 
   const generateReceiptHTML = (delivery: Delivery): string => {
@@ -620,18 +673,44 @@ export default function DeliveriesScreen() {
 
               <View style={styles.actionButtons}>
                 {isMessenger ? (
-                  delivery.status !== 'delivered' ? (
-                    <TouchableOpacity
-                      style={styles.deliveredButtonFull}
-                      onPress={() => handleMarkAsDelivered(delivery)}
-                    >
-                      <CheckCircle color="#FFFFFF" size={20} />
-                      <Text style={styles.deliveredButtonText}>Marcar como Entregado</Text>
-                    </TouchableOpacity>
-                  ) : (
+                  delivery.status === 'delivered' ? (
                     <View style={styles.deliveredStatusContainer}>
                       <CheckCircle color="#10B981" size={24} />
                       <Text style={styles.deliveredStatusText}>Paquete Entregado</Text>
+                    </View>
+                  ) : delivery.status === 'not_delivered' ? (
+                    <View style={styles.notDeliveredStatusContainer}>
+                      <XCircle color="#EF4444" size={24} />
+                      <View style={styles.notDeliveredInfo}>
+                        <Text style={styles.notDeliveredStatusText}>No Entregado</Text>
+                        {delivery.notDeliveredReason && (
+                          <Text style={styles.notDeliveredReason}>Motivo: {delivery.notDeliveredReason}</Text>
+                        )}
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.messengerActionsRow}>
+                      <TouchableOpacity
+                        style={styles.deliveredButton}
+                        onPress={() => handleMarkAsDelivered(delivery)}
+                      >
+                        <CheckCircle color="#FFFFFF" size={18} />
+                        <Text style={styles.messengerActionText}>Entregado</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.rescheduleButton}
+                        onPress={() => handleReschedule(delivery)}
+                      >
+                        <Calendar color="#FFFFFF" size={18} />
+                        <Text style={styles.messengerActionText}>Reprogramar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.notDeliveredButton}
+                        onPress={() => handleNotDelivered(delivery)}
+                      >
+                        <XCircle color="#FFFFFF" size={18} />
+                        <Text style={styles.messengerActionText}>No Entregado</Text>
+                      </TouchableOpacity>
                     </View>
                   )
                 ) : (
@@ -662,6 +741,91 @@ export default function DeliveriesScreen() {
           ))
         )}
       </ScrollView>
+
+      <Modal
+        visible={showNotDeliveredModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNotDeliveredModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <XCircle color="#EF4444" size={32} />
+              <Text style={styles.modalTitle}>No Entregado</Text>
+              <Text style={styles.modalSubtitle}>¿Por qué no se pudo entregar el paquete?</Text>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Motivo *</Text>
+              <TextInput
+                style={styles.textArea}
+                placeholder="Ej: Destinatario no se encontraba en casa, dirección incorrecta, etc."
+                value={notDeliveredReason}
+                onChangeText={setNotDeliveredReason}
+                placeholderTextColor={Colors.light.muted}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowNotDeliveredModal(false);
+                  setNotDeliveredReason('');
+                  setSelectedDelivery(null);
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={handleConfirmNotDelivered}
+              >
+                <Text style={styles.modalConfirmText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showRescheduleModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRescheduleModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Calendar color="#F59E0B" size={32} />
+              <Text style={styles.modalTitle}>Reprogramar Envío</Text>
+              <Text style={styles.modalSubtitle}>¿Deseas reprogramar este envío para otra fecha?</Text>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowRescheduleModal(false);
+                  setSelectedDelivery(null);
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={handleConfirmReschedule}
+              >
+                <Text style={styles.modalConfirmText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -957,22 +1121,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 16,
   },
-  deliveredButton: {
-    flex: 1,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: '#10B981',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
   deliveredButtonFull: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -1077,5 +1225,180 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700' as const,
+  },
+  messengerActionsRow: {
+    flexDirection: 'row' as const,
+    gap: 8,
+  },
+  deliveredButton: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: '#10B981',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  rescheduleButton: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: '#F59E0B',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  notDeliveredButton: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: '#EF4444',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  messengerActionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600' as const,
+  },
+  notDeliveredStatusContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  notDeliveredInfo: {
+    flex: 1,
+  },
+  notDeliveredStatusText: {
+    color: '#991B1B',
+    fontSize: 15,
+    fontWeight: '700' as const,
+    marginBottom: 4,
+  },
+  notDeliveredReason: {
+    color: '#DC2626',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  modalHeader: {
+    alignItems: 'center' as const,
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+    marginTop: 12,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Colors.light.muted,
+    marginTop: 8,
+    textAlign: 'center' as const,
+  },
+  modalBody: {
+    padding: 24,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+    marginBottom: 8,
+  },
+  textArea: {
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: Colors.light.text,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    minHeight: 100,
+  },
+  modalActions: {
+    flexDirection: 'row' as const,
+    padding: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.light.border,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: Colors.light.background,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    alignItems: 'center' as const,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    backgroundColor: Colors.light.primary,
+    alignItems: 'center' as const,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalConfirmText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
 });
