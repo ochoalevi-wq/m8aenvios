@@ -757,7 +757,7 @@ export default function DeliveriesScreen() {
             </View>
 
             <View style={styles.modalBody}>
-              <Text style={styles.inputLabel}>Motivo *</Text>
+              <Text style={styles.inputLabel}>Motivo</Text>
               <TextInput
                 style={styles.textArea}
                 placeholder="Ej: Destinatario no se encontraba en casa, dirección incorrecta, etc."
