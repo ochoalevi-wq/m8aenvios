@@ -652,19 +652,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.light.text,
-    marginBottom: 4,
   },
   zoneChipTextActive: {
     color: '#FFFFFF',
   },
-  zoneChipCost: {
-    fontSize: 12,
-    color: Colors.light.muted,
-  },
-  zoneChipCostActive: {
-    color: '#FFFFFF',
-    opacity: 0.9,
-  },
+
   summaryCard: {
     backgroundColor: Colors.light.card,
     borderRadius: 16,
