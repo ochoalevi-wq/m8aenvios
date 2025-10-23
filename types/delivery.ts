@@ -1,4 +1,4 @@
-export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+export type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled' | 'rescheduled' | 'not_delivered';
 
 export type PickupStatus = 'scheduled' | 'collected' | 'cancelled';
 
@@ -24,6 +24,8 @@ export interface Delivery {
   updatedAt: string;
   description?: string;
   photos?: string[];
+  notDeliveredReason?: string;
+  rescheduledDate?: string;
 }
 
 export interface DeliveryStats {
@@ -84,6 +86,8 @@ export const STATUS_LABELS: Record<DeliveryStatus, string> = {
   in_transit: 'En Tránsito',
   delivered: 'Entregado',
   cancelled: 'Cancelado',
+  rescheduled: 'Reprogramado',
+  not_delivered: 'No Entregado',
 };
 
 export const PICKUP_STATUS_LABELS: Record<PickupStatus, string> = {

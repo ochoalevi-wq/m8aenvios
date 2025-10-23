@@ -20,7 +20,9 @@ import {
   Car,
   MessageCircle,
   Camera,
-  Image as ImageIcon
+  Image as ImageIcon,
+  XCircle,
+  RefreshCw
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -334,6 +336,58 @@ export default function MessengersScreen() {
       await updateStatus(deliveryId, newStatus);
     };
 
+    const handleReschedule = async (deliveryId: string) => {
+      Alert.alert(
+        'Reprogramar Entrega',
+        '¿Deseas marcar esta entrega como reprogramada?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Reprogramar',
+            onPress: async () => {
+              const rescheduledDate = new Date().toISOString();
+              await updateDelivery(deliveryId, {
+                status: 'rescheduled',
+                rescheduledDate,
+              });
+              Alert.alert('Éxito', 'La entrega ha sido marcada como reprogramada');
+            },
+          },
+        ]
+      );
+    };
+
+    const handleNotDelivered = (deliveryId: string) => {
+      Alert.prompt(
+        'No Entregado',
+        'Por favor, indica el motivo por el cual no se pudo entregar el paquete:',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Confirmar',
+            onPress: async (reason?: string) => {
+              if (!reason || reason.trim() === '') {
+                Alert.alert('Error', 'Debes proporcionar un motivo');
+                return;
+              }
+              await updateDelivery(deliveryId, {
+                status: 'not_delivered',
+                notDeliveredReason: reason,
+              });
+              Alert.alert('Éxito', 'El estado del paquete ha sido actualizado');
+            },
+          },
+        ],
+        'plain-text'
+      );
+    };
+
     if (showCamera && Platform.OS !== 'web') {
       return (
         <View style={styles.cameraContainer}>
@@ -421,6 +475,8 @@ export default function MessengersScreen() {
                     delivery.status === 'pending' && styles.statusIndicatorPending,
                     delivery.status === 'in_transit' && styles.statusIndicatorInTransit,
                     delivery.status === 'delivered' && styles.statusIndicatorDelivered,
+                    delivery.status === 'rescheduled' && styles.statusIndicatorRescheduled,
+                    delivery.status === 'not_delivered' && styles.statusIndicatorNotDelivered,
                   ]} />
                   <View style={styles.deliveryCardInfo}>
                     <Text style={styles.deliveryCardId}>#{delivery.id.slice(-6)}</Text>
@@ -433,6 +489,8 @@ export default function MessengersScreen() {
                     delivery.status === 'delivered' && styles.statusDelivered,
                     delivery.status === 'in_transit' && styles.statusInTransit,
                     delivery.status === 'pending' && styles.statusPending,
+                    delivery.status === 'rescheduled' && styles.statusRescheduled,
+                    delivery.status === 'not_delivered' && styles.statusNotDelivered,
                   ]}>
                     <Text style={styles.deliveryCardStatusText}>
                       {STATUS_LABELS[delivery.status]}
@@ -521,6 +579,32 @@ export default function MessengersScreen() {
                     </View>
                   )}
 
+                  {delivery.status === 'not_delivered' && delivery.notDeliveredReason && (
+                    <View style={styles.deliveryDetailSection}>
+                      <View style={styles.notDeliveredReasonCard}>
+                        <Text style={styles.deliveryDetailSectionTitle}>Motivo de No Entrega</Text>
+                        <Text style={styles.deliveryDetailText}>{delivery.notDeliveredReason}</Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {delivery.status === 'rescheduled' && delivery.rescheduledDate && (
+                    <View style={styles.deliveryDetailSection}>
+                      <View style={styles.rescheduledDateCard}>
+                        <Text style={styles.deliveryDetailSectionTitle}>Reprogramado</Text>
+                        <Text style={styles.deliveryDetailText}>
+                          {new Date(delivery.rescheduledDate).toLocaleDateString('es-GT', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
                   <View style={styles.deliveryDetailSection}>
                     <Text style={styles.deliveryDetailSectionTitle}>Costos</Text>
                     <View style={styles.deliveryDetailRow}>
@@ -574,13 +658,31 @@ export default function MessengersScreen() {
                       </TouchableOpacity>
                     )}
                     {canComplete && (
-                      <TouchableOpacity
-                        style={[styles.actionButton, styles.actionButtonSuccess]}
-                        onPress={() => handleStatusChange(delivery.id, 'delivered')}
-                      >
-                        <CheckCircle color="#FFFFFF" size={20} />
-                        <Text style={styles.actionButtonText}>Marcar como Entregado</Text>
-                      </TouchableOpacity>
+                      <>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.actionButtonSuccess]}
+                          onPress={() => handleStatusChange(delivery.id, 'delivered')}
+                        >
+                          <CheckCircle color="#FFFFFF" size={20} />
+                          <Text style={styles.actionButtonText}>Marcar como Entregado</Text>
+                        </TouchableOpacity>
+                        <View style={styles.actionButtonRow}>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.actionButtonWarning]}
+                            onPress={() => handleReschedule(delivery.id)}
+                          >
+                            <RefreshCw color="#FFFFFF" size={20} />
+                            <Text style={styles.actionButtonText}>Reprogramar</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.actionButtonDanger]}
+                            onPress={() => handleNotDelivered(delivery.id)}
+                          >
+                            <XCircle color="#FFFFFF" size={20} />
+                            <Text style={styles.actionButtonText}>No Entregado</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
                     )}
                   </View>
                 </View>
@@ -1093,6 +1195,12 @@ const styles = StyleSheet.create({
   statusDelivered: {
     backgroundColor: '#D1FAE5',
   },
+  statusRescheduled: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusNotDelivered: {
+    backgroundColor: '#FEE2E2',
+  },
   deliveryStatusText: {
     fontSize: 10,
     fontWeight: '600' as const,
@@ -1248,6 +1356,12 @@ const styles = StyleSheet.create({
   statusIndicatorDelivered: {
     backgroundColor: '#10B981',
   },
+  statusIndicatorRescheduled: {
+    backgroundColor: '#F59E0B',
+  },
+  statusIndicatorNotDelivered: {
+    backgroundColor: '#EF4444',
+  },
   deliveryCardInfo: {
     flex: 1,
   },
@@ -1383,10 +1497,20 @@ const styles = StyleSheet.create({
   actionButtonCamera: {
     backgroundColor: '#8B5CF6',
   },
+  actionButtonWarning: {
+    backgroundColor: '#F59E0B',
+  },
+  actionButtonDanger: {
+    backgroundColor: '#EF4444',
+  },
   actionButtonText: {
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#FFFFFF',
+  },
+  actionButtonRow: {
+    flexDirection: 'row' as const,
+    gap: 12,
   },
   contactActions: {
     flexDirection: 'row' as const,
@@ -1469,5 +1593,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 8,
     backgroundColor: Colors.light.border,
+  },
+  notDeliveredReasonCard: {
+    backgroundColor: '#FEE2E2',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+  },
+  rescheduledDateCard: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
   },
 });
