@@ -2,8 +2,7 @@ import { useDeliveries } from '@/contexts/DeliveryContext';
 import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS } from '@/types/delivery';
-import type { Delivery } from '@/types/delivery';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   CheckCircle, 
   Clock, 
@@ -20,7 +19,7 @@ import {
   Car,
   MessageCircle,
   Camera,
-  Image as ImageIcon,
+
   XCircle,
   RefreshCw
 } from 'lucide-react-native';
@@ -37,21 +36,11 @@ import {
   Platform,
   Image
 } from 'react-native';
-import * as Notifications from 'expo-notifications';
+
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 
-if (Platform.OS !== 'web') {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-}
+
 
 interface MessengerStats {
   name: string;
@@ -83,7 +72,7 @@ export default function MessengersScreen() {
   const router = useRouter();
   const [expandedMessenger, setExpandedMessenger] = useState<string | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | null>(null);
-  const [previousDeliveriesCount, setPreviousDeliveriesCount] = useState<number>(0);
+
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [currentDeliveryId, setCurrentDeliveryId] = useState<string | null>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -92,56 +81,11 @@ export default function MessengersScreen() {
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
 
-  useEffect(() => {
-    if (Platform.OS !== 'web' && isMessenger) {
-      requestNotificationPermissions();
-    }
-  }, [isMessenger]);
 
-  useEffect(() => {
-    if (isMessenger && user?.id) {
-      const myDeliveries = deliveries.filter(d => d.messengerId === user.id);
-      if (myDeliveries.length > previousDeliveriesCount && previousDeliveriesCount > 0) {
-        sendNotification('Nuevo paquete asignado', 'Se te ha asignado un nuevo paquete para entregar');
-      }
-      setPreviousDeliveriesCount(myDeliveries.length);
-    }
-  }, [deliveries, isMessenger, user?.id, previousDeliveriesCount]);
 
-  const requestNotificationPermissions = async () => {
-    try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        console.log('Permiso de notificaciones denegado');
-      }
-    } catch (error) {
-      console.error('Error solicitando permisos de notificaciones:', error);
-    }
-  };
 
-  const sendNotification = async (title: string, body: string) => {
-    if (Platform.OS === 'web') {
-      console.log('Notificación:', title, body);
-      return;
-    }
-    try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-        },
-        trigger: null,
-      });
-    } catch (error) {
-      console.error('Error enviando notificación:', error);
-    }
-  };
+
+
 
   const messengerCredentials = useMemo(() => {
     return credentials.filter(c => c.role === 'messenger');
