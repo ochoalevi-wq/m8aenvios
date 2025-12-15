@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, TextInput, Modal, Linking } from 'react-native';
 import { useAuth, UserRole, Credential, useMessengers, LicenseType, VehicleType } from '@/contexts/AuthContext';
-import Colors from '@/constants/colors';
-import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, Phone, CreditCard, Car, Moon, Sun, MessageCircle } from 'lucide-react-native';
+import { ImagePlus, Trash2, User as UserIcon, Plus, Edit2, Shield, X, Calendar, CreditCard, Car, Moon, Sun, MessageCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -166,7 +165,7 @@ export default function SettingsScreen() {
         Alert.alert('Éxito', 'Usuario agregado correctamente');
       }
       setModalVisible(false);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar el usuario');
     }
   };
@@ -189,7 +188,7 @@ export default function SettingsScreen() {
             try {
               await deleteCredential(credential.id);
               Alert.alert('Éxito', 'Usuario eliminado correctamente');
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar el usuario');
             }
           }
@@ -214,72 +213,74 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>WhatsApp de la Empresa</Text>
-        <Text style={[styles.sectionDescription, { color: colors.muted }]}>
-          Configura el número de WhatsApp para contacto directo
-        </Text>
+      {isAdmin && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>WhatsApp de la Empresa</Text>
+          <Text style={[styles.sectionDescription, { color: colors.muted }]}>
+            Configura el número de WhatsApp para contacto directo
+          </Text>
 
-        <View style={[styles.whatsappCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.whatsappHeader}>
-            <View style={[styles.whatsappIconContainer, { backgroundColor: '#D1FAE5' }]}>
-              <MessageCircle color="#25D366" size={24} />
+          <View style={[styles.whatsappCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.whatsappHeader}>
+              <View style={[styles.whatsappIconContainer, { backgroundColor: '#D1FAE5' }]}>
+                <MessageCircle color="#25D366" size={24} />
+              </View>
+              <View style={styles.whatsappInfo}>
+                <Text style={[styles.whatsappTitle, { color: colors.text }]}>Número de WhatsApp</Text>
+                <Text style={[styles.whatsappSubtitle, { color: colors.muted }]}>
+                  {whatsappNumber ? `+502 ${whatsappNumber}` : 'No configurado'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.whatsappInfo}>
-              <Text style={[styles.whatsappTitle, { color: colors.text }]}>Número de WhatsApp</Text>
-              <Text style={[styles.whatsappSubtitle, { color: colors.muted }]}>
-                {whatsappNumber ? `+502 ${whatsappNumber}` : 'No configurado'}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.formGroup}>
-            <Text style={[styles.formLabel, { color: colors.text }]}>Número de Teléfono</Text>
-            <View style={[styles.phoneInputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.phonePrefix, { color: colors.primary }]}>+502</Text>
-              <TextInput
-                style={[styles.phoneInputField, { color: colors.text }]}
-                placeholderTextColor={colors.muted}
-                placeholder="Ingresa el número de WhatsApp"
-                value={editingWhatsappNumber}
-                onChangeText={setEditingWhatsappNumber}
-                keyboardType="phone-pad"
-                autoCorrect={false}
-              />
-            </View>
-            <TouchableOpacity 
-              style={[styles.saveWhatsappButton, { backgroundColor: '#25D366' }]}
-              onPress={() => updateWhatsappNumber(editingWhatsappNumber)}
-            >
-              <MessageCircle color="#FFFFFF" size={20} />
-              <Text style={styles.saveWhatsappButtonText}>Guardar Número de WhatsApp</Text>
-            </TouchableOpacity>
-            {whatsappNumber && (
+            <View style={styles.formGroup}>
+              <Text style={[styles.formLabel, { color: colors.text }]}>Número de Teléfono</Text>
+              <View style={[styles.phoneInputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <Text style={[styles.phonePrefix, { color: colors.primary }]}>+502</Text>
+                <TextInput
+                  style={[styles.phoneInputField, { color: colors.text }]}
+                  placeholderTextColor={colors.muted}
+                  placeholder="Ingresa el número de WhatsApp"
+                  value={editingWhatsappNumber}
+                  onChangeText={setEditingWhatsappNumber}
+                  keyboardType="phone-pad"
+                  autoCorrect={false}
+                />
+              </View>
               <TouchableOpacity 
-                style={[styles.testWhatsappButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                onPress={() => {
-                  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
-                  const whatsappUrl = `whatsapp://send?phone=502${cleanPhone}`;
-                  Linking.canOpenURL(whatsappUrl)
-                    .then((supported) => {
-                      if (supported) {
-                        return Linking.openURL(whatsappUrl);
-                      } else {
-                        Alert.alert('Error', 'WhatsApp no está instalado en este dispositivo.');
-                      }
-                    })
-                    .catch((error) => {
-                      console.error('Error al abrir WhatsApp:', error);
-                      Alert.alert('Error', 'No se pudo abrir WhatsApp.');
-                    });
-                }}
+                style={[styles.saveWhatsappButton, { backgroundColor: '#25D366' }]}
+                onPress={() => updateWhatsappNumber(editingWhatsappNumber)}
               >
-                <Text style={[styles.testWhatsappButtonText, { color: colors.text }]}>Probar Conexión</Text>
+                <MessageCircle color="#FFFFFF" size={20} />
+                <Text style={styles.saveWhatsappButtonText}>Guardar Número de WhatsApp</Text>
               </TouchableOpacity>
-            )}
+              {whatsappNumber && (
+                <TouchableOpacity 
+                  style={[styles.testWhatsappButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                  onPress={() => {
+                    const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
+                    const whatsappUrl = `whatsapp://send?phone=502${cleanPhone}`;
+                    Linking.canOpenURL(whatsappUrl)
+                      .then((supported) => {
+                        if (supported) {
+                          return Linking.openURL(whatsappUrl);
+                        } else {
+                          Alert.alert('Error', 'WhatsApp no está instalado en este dispositivo.');
+                        }
+                      })
+                      .catch((error) => {
+                        console.error('Error al abrir WhatsApp:', error);
+                        Alert.alert('Error', 'No se pudo abrir WhatsApp.');
+                      });
+                  }}
+                >
+                  <Text style={[styles.testWhatsappButtonText, { color: colors.text }]}>Probar Conexión</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Apariencia</Text>
@@ -365,70 +366,72 @@ export default function SettingsScreen() {
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Información de la Empresa</Text>
-        <Text style={[styles.sectionDescription, { color: colors.muted }]}>
-          Personaliza tu aplicación con el logo y nombre de tu empresa
-        </Text>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.formLabel, { color: colors.text }]}>Nombre de la Empresa</Text>
-          <TextInput
-            style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-            placeholderTextColor={colors.muted}
-            placeholder="Ingresa el nombre de tu empresa"
-            value={editingCompanyName}
-            onChangeText={setEditingCompanyName}
-            autoCapitalize="words"
-            autoCorrect={false}
-          />
-          <TouchableOpacity 
-            style={[styles.saveNameButton, { backgroundColor: colors.primary }]}
-            onPress={() => updateCompanyName(editingCompanyName)}
-          >
-            <Text style={styles.saveNameButtonText}>Guardar Nombre</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={[styles.subSectionTitle, { color: colors.text }]}>Logo de la Empresa</Text>
-
-        <View style={styles.logoContainer}>
-          {logo ? (
-            <View style={[styles.logoPreviewContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Image 
-                source={{ uri: logo }} 
-                style={styles.logoPreview}
-                resizeMode="contain"
-              />
-              <TouchableOpacity 
-                style={styles.removeButton}
-                onPress={removeLogo}
-              >
-                <Trash2 color="#FFFFFF" size={20} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={[styles.logoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <ImagePlus color={colors.muted} size={48} />
-              <Text style={[styles.logoPlaceholderText, { color: colors.muted }]}>Sin logo</Text>
-            </View>
-          )}
-        </View>
-
-        <TouchableOpacity 
-          style={[styles.uploadButton, { backgroundColor: colors.primary }]}
-          onPress={pickImage}
-        >
-          <ImagePlus color="#FFFFFF" size={20} />
-          <Text style={styles.uploadButtonText}>
-            {logo ? 'Cambiar Logo' : 'Cargar Logo'}
+      {isAdmin && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Información de la Empresa</Text>
+          <Text style={[styles.sectionDescription, { color: colors.muted }]}>
+            Personaliza tu aplicación con el logo y nombre de tu empresa
           </Text>
-        </TouchableOpacity>
 
-        <Text style={[styles.helpText, { color: colors.muted }]}>
-          El logo se mostrará en el encabezado de la aplicación. Se recomienda usar una imagen cuadrada con fondo transparente.
-        </Text>
-      </View>
+          <View style={styles.formGroup}>
+            <Text style={[styles.formLabel, { color: colors.text }]}>Nombre de la Empresa</Text>
+            <TextInput
+              style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              placeholderTextColor={colors.muted}
+              placeholder="Ingresa el nombre de tu empresa"
+              value={editingCompanyName}
+              onChangeText={setEditingCompanyName}
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+            <TouchableOpacity 
+              style={[styles.saveNameButton, { backgroundColor: colors.primary }]}
+              onPress={() => updateCompanyName(editingCompanyName)}
+            >
+              <Text style={styles.saveNameButtonText}>Guardar Nombre</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[styles.subSectionTitle, { color: colors.text }]}>Logo de la Empresa</Text>
+
+          <View style={styles.logoContainer}>
+            {logo ? (
+              <View style={[styles.logoPreviewContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Image 
+                  source={{ uri: logo }} 
+                  style={styles.logoPreview}
+                  resizeMode="contain"
+                />
+                <TouchableOpacity 
+                  style={styles.removeButton}
+                  onPress={removeLogo}
+                >
+                  <Trash2 color="#FFFFFF" size={20} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={[styles.logoPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <ImagePlus color={colors.muted} size={48} />
+                <Text style={[styles.logoPlaceholderText, { color: colors.muted }]}>Sin logo</Text>
+              </View>
+            )}
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.uploadButton, { backgroundColor: colors.primary }]}
+            onPress={pickImage}
+          >
+            <ImagePlus color="#FFFFFF" size={20} />
+            <Text style={styles.uploadButtonText}>
+              {logo ? 'Cambiar Logo' : 'Cargar Logo'}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.helpText, { color: colors.muted }]}>
+            El logo se mostrará en el encabezado de la aplicación. Se recomienda usar una imagen cuadrada con fondo transparente.
+          </Text>
+        </View>
+      )}
 
       {isAdmin && (
         <View style={styles.section}>
