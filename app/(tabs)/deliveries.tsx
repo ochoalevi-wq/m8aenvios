@@ -1,10 +1,10 @@
 import { useFilteredDeliveries, useDeliveries } from '@/contexts/DeliveryContext';
-import { useAuth, type Credential } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS, type DeliveryStatus, type Zone, type Delivery } from '@/types/delivery';
 import React, { useState, useMemo } from 'react';
 import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Linking } from 'react-native';
-import { Search, Filter, Package, Printer, CheckCircle, UserPlus, UserCog, Phone, MessageCircle, XCircle, Calendar } from 'lucide-react-native';
+import { Search, Filter, Package, Printer, CheckCircle, UserPlus, Phone, MessageCircle, XCircle, Calendar } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import { useRouter } from 'expo-router';
 
@@ -405,12 +405,7 @@ export default function DeliveriesScreen() {
     `;
   };
 
-  const handleReassign = (delivery: Delivery) => {
-    router.push({
-      pathname: '/assign-delivery',
-      params: { deliveryId: delivery.id }
-    });
-  };
+
 
   const handleCallReceiver = (phoneNumber: string) => {
     const phoneUrl = `tel:${phoneNumber}`;
@@ -715,27 +710,16 @@ export default function DeliveriesScreen() {
                     </React.Fragment>
                   )
                 ) : (
-                  <>
-                    {canAssign && delivery.status !== 'delivered' && (
-                      <TouchableOpacity
-                        style={styles.reassignButton}
-                        onPress={() => handleReassign(delivery)}
-                      >
-                        <UserCog color="#FFFFFF" size={18} />
-                        <Text style={styles.reassignButtonText}>Reasignar</Text>
-                      </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      style={[
-                        styles.printButton,
-                        delivery.status !== 'delivered' && styles.printButtonSecondary
-                      ]}
-                      onPress={() => handlePrintReceipt(delivery)}
-                    >
-                      <Printer color="#FFFFFF" size={18} />
-                      <Text style={styles.printButtonText}>Imprimir</Text>
-                    </TouchableOpacity>
-                  </>
+                  <TouchableOpacity
+                    style={[
+                      styles.printButton,
+                      delivery.status !== 'delivered' && styles.printButtonSecondary
+                    ]}
+                    onPress={() => handlePrintReceipt(delivery)}
+                  >
+                    <Printer color="#FFFFFF" size={18} />
+                    <Text style={styles.printButtonText}>Imprimir</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
