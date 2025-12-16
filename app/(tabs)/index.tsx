@@ -3,9 +3,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS } from '@/types/delivery';
 import { useRouter } from 'expo-router';
-import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react-native';
+import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp, MessageCircle, ArrowRight, Activity } from 'lucide-react-native';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { useMemo, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function DashboardScreen() {
     }
 
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.messengerContentContainer}>
         <View style={styles.messengerWelcomeCard}>
           <View style={styles.messengerWelcomeHeader}>
             <View style={styles.messengerWelcomeAvatar}>
@@ -285,213 +286,384 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{isMessenger ? `Hola, ${user?.name}` : (companyName || 'Dashboard')}</Text>
-        <Text style={styles.subtitle}>{isMessenger ? 'Tus envíos asignados' : 'Gestión de Paquetes'}</Text>
-      </View>
-
-      <View style={styles.statsGrid}>
-        <View style={[styles.statCard, styles.primaryCard]}>
-          <View style={styles.statIconContainer}>
-            <Package color="#FFFFFF" size={24} />
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.greeting}>Hola 👋</Text>
+            <Text style={styles.headerTitle}>{companyName || 'Dashboard'}</Text>
           </View>
-          <Text style={styles.statValue}>{myStats.total}</Text>
-          <Text style={styles.statLabel}>Total Envíos</Text>
-        </View>
-
-        <View style={[styles.statCard, styles.warningCard]}>
-          <View style={styles.statIconContainer}>
-            <Clock color="#FFFFFF" size={24} />
-          </View>
-          <Text style={styles.statValue}>{myStats.pending}</Text>
-          <Text style={styles.statLabel}>Pendientes</Text>
-        </View>
-
-        <View style={[styles.statCard, styles.infoCard]}>
-          <View style={styles.statIconContainer}>
-            <Truck color="#FFFFFF" size={24} />
-          </View>
-          <Text style={styles.statValue}>{myStats.inTransit}</Text>
-          <Text style={styles.statLabel}>En Tránsito</Text>
-        </View>
-
-        <View style={[styles.statCard, styles.successCard]}>
-          <View style={styles.statIconContainer}>
-            <CheckCircle color="#FFFFFF" size={24} />
-          </View>
-          <Text style={styles.statValue}>{myStats.delivered}</Text>
-          <Text style={styles.statLabel}>Entregados</Text>
-        </View>
-      </View>
-
-      <View style={styles.revenueCard}>
-        <View style={styles.revenueHeader}>
-          <TrendingUp color={Colors.light.success} size={28} />
-          <View style={styles.revenueTextContainer}>
-            <Text style={styles.revenueLabel}>Ingresos Totales</Text>
-            <Text style={styles.revenueValue}>Q {myStats.totalRevenue.toFixed(2)}</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Envíos Recientes</Text>
-          <TouchableOpacity onPress={() => router.push('/deliveries')}>
-            <Text style={styles.seeAllText}>Ver Todos</Text>
+          <TouchableOpacity style={styles.headerIconButton}>
+            <Activity color="#FFFFFF" size={24} />
           </TouchableOpacity>
         </View>
+      </LinearGradient>
 
-        {recentDeliveries.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Package color={Colors.light.muted} size={48} />
-            <Text style={styles.emptyText}>No hay envíos registrados</Text>
-            {!isMessenger && (
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => router.push('/new-delivery')}
-              >
-                <Text style={styles.addButtonText}>Crear Primer Envío</Text>
-              </TouchableOpacity>
-            )}
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.statsContainer}>
+          <View style={styles.statsHeader}>
+            <Text style={styles.statsTitle}>Resumen General</Text>
+            <TouchableOpacity>
+              <Text style={styles.statsLink}>Ver más</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          recentDeliveries.map((delivery) => (
-            <View
-              key={delivery.id}
-              style={styles.deliveryCard}
-            >
-              <View style={styles.deliveryHeader}>
-                <View style={styles.deliveryInfo}>
-                  <Text style={styles.deliveryName}>{delivery.receiver.name}</Text>
-                  <Text style={styles.deliveryZone}>{delivery.zone.replace('_', ' ').toUpperCase()}</Text>
+
+          <View style={styles.statsGrid}>
+            <View style={[styles.statCard, styles.primaryCard]}>
+              <LinearGradient
+                colors={['#667eea', '#764ba2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconCircle}>
+                  <Package color="#FFFFFF" size={20} />
                 </View>
-                <View style={[
-                  styles.statusBadge,
-                  delivery.status === 'delivered' && styles.statusDelivered,
-                  delivery.status === 'in_transit' && styles.statusInTransit,
-                  delivery.status === 'pending' && styles.statusPending,
-                ]}>
-                  <Text style={styles.statusText}>{STATUS_LABELS[delivery.status]}</Text>
+                <Text style={styles.statValue}>{myStats.total}</Text>
+                <Text style={styles.statLabel}>Total Envíos</Text>
+              </LinearGradient>
+            </View>
+
+            <View style={[styles.statCard, styles.warningCard]}>
+              <LinearGradient
+                colors={['#f093fb', '#f5576c']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconCircle}>
+                  <Clock color="#FFFFFF" size={20} />
+                </View>
+                <Text style={styles.statValue}>{myStats.pending}</Text>
+                <Text style={styles.statLabel}>Pendientes</Text>
+              </LinearGradient>
+            </View>
+
+            <View style={[styles.statCard, styles.infoCard]}>
+              <LinearGradient
+                colors={['#4facfe', '#00f2fe']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconCircle}>
+                  <Truck color="#FFFFFF" size={20} />
+                </View>
+                <Text style={styles.statValue}>{myStats.inTransit}</Text>
+                <Text style={styles.statLabel}>En Tránsito</Text>
+              </LinearGradient>
+            </View>
+
+            <View style={[styles.statCard, styles.successCard]}>
+              <LinearGradient
+                colors={['#43e97b', '#38f9d7']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconCircle}>
+                  <CheckCircle color="#FFFFFF" size={20} />
+                </View>
+                <Text style={styles.statValue}>{myStats.delivered}</Text>
+                <Text style={styles.statLabel}>Entregados</Text>
+              </LinearGradient>
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.revenueCard} activeOpacity={0.9}>
+          <LinearGradient
+            colors={['#1a1a2e', '#16213e']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.revenueGradient}
+          >
+            <View style={styles.revenueContent}>
+              <View style={styles.revenueLeft}>
+                <View style={styles.revenueIconContainer}>
+                  <TrendingUp color="#43e97b" size={24} />
+                </View>
+                <View>
+                  <Text style={styles.revenueLabel}>Ingresos Totales</Text>
+                  <Text style={styles.revenueValue}>Q {myStats.totalRevenue.toFixed(2)}</Text>
+                  <Text style={styles.revenueSubtext}>+12% vs mes anterior</Text>
                 </View>
               </View>
-              <View style={styles.deliveryFooter}>
-                <Text style={styles.deliveryMessenger}>Mensajero: {delivery.messenger}</Text>
-                <Text style={styles.deliveryTotal}>Q {(delivery.packageCost + delivery.shippingCost).toFixed(2)}</Text>
+              <View style={styles.revenueArrow}>
+                <ArrowRight color="rgba(255, 255, 255, 0.4)" size={24} />
               </View>
             </View>
-          ))
-        )}
-      </View>
-    </ScrollView>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>Envíos Recientes</Text>
+              <Text style={styles.sectionSubtitle}>{recentDeliveries.length} entregas activas</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.viewAllButton}
+              onPress={() => router.push('/deliveries')}
+            >
+              <Text style={styles.viewAllText}>Ver todos</Text>
+              <ArrowRight color={Colors.light.primary} size={16} />
+            </TouchableOpacity>
+          </View>
+
+          {recentDeliveries.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconCircle}>
+                <Package color={Colors.light.primary} size={32} />
+              </View>
+              <Text style={styles.emptyText}>No hay envíos registrados</Text>
+              <Text style={styles.emptySubtext}>Comienza creando tu primer envío</Text>
+              {!isMessenger && (
+                <TouchableOpacity 
+                  style={styles.addButton}
+                  onPress={() => router.push('/new-delivery')}
+                >
+                  <Text style={styles.addButtonText}>Crear Primer Envío</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            recentDeliveries.map((delivery, index) => (
+              <TouchableOpacity
+                key={delivery.id}
+                style={[styles.deliveryCard, { marginTop: index === 0 ? 0 : 12 }]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.deliveryCardTop}>
+                  <View style={styles.deliveryCardLeft}>
+                    <View style={[
+                      styles.deliveryStatusDot,
+                      delivery.status === 'delivered' && styles.statusDotDelivered,
+                      delivery.status === 'in_transit' && styles.statusDotInTransit,
+                      delivery.status === 'pending' && styles.statusDotPending,
+                    ]} />
+                    <View style={styles.deliveryInfo}>
+                      <Text style={styles.deliveryName}>{delivery.receiver.name}</Text>
+                      <View style={styles.deliveryMeta}>
+                        <MapPin color={Colors.light.muted} size={12} />
+                        <Text style={styles.deliveryZone}>{delivery.zone.replace('_', ' ').toUpperCase()}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={[
+                    styles.statusBadge,
+                    delivery.status === 'delivered' && styles.statusDelivered,
+                    delivery.status === 'in_transit' && styles.statusInTransit,
+                    delivery.status === 'pending' && styles.statusPending,
+                  ]}>
+                    <Text style={[
+                      styles.statusText,
+                      delivery.status === 'delivered' && styles.statusTextDelivered,
+                      delivery.status === 'in_transit' && styles.statusTextInTransit,
+                      delivery.status === 'pending' && styles.statusTextPending,
+                    ]}>{STATUS_LABELS[delivery.status]}</Text>
+                  </View>
+                </View>
+                <View style={styles.deliveryDivider} />
+                <View style={styles.deliveryFooter}>
+                  <View style={styles.deliveryMessengerInfo}>
+                    <Truck color={Colors.light.muted} size={14} />
+                    <Text style={styles.deliveryMessenger}>{delivery.messenger}</Text>
+                  </View>
+                  <Text style={styles.deliveryTotal}>Q {(delivery.packageCost + delivery.shippingCost).toFixed(2)}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: '#f8f9fa',
   },
-  contentContainer: {
-    padding: 16,
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+  },
+  greeting: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  headerIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
+  },
+  statsContainer: {
+    marginTop: -20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  statsHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    marginBottom: 16,
+  },
+  statsTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#1a1a1a',
+  },
+  statsLink: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#667eea',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.light.muted,
+    backgroundColor: '#f8f9fa',
   },
   statsGrid: {
     flexDirection: 'row' as const,
     flexWrap: 'wrap' as const,
     gap: 12,
-    marginBottom: 20,
   },
   statCard: {
     flex: 1,
     minWidth: '47%',
-    backgroundColor: Colors.light.card,
-    borderRadius: 16,
+    borderRadius: 20,
+    overflow: 'hidden' as const,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  statGradient: {
     padding: 20,
     alignItems: 'center' as const,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    minHeight: 140,
+    justifyContent: 'center' as const,
   },
-  primaryCard: {
-    backgroundColor: Colors.light.primary,
-  },
-  warningCard: {
-    backgroundColor: Colors.light.warning,
-  },
-  infoCard: {
-    backgroundColor: Colors.light.secondary,
-  },
-  successCard: {
-    backgroundColor: Colors.light.success,
-  },
-  statIconContainer: {
+  statIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     marginBottom: 12,
   },
+  primaryCard: {},
+  warningCard: {},
+  infoCard: {},
+  successCard: {},
   statValue: {
-    fontSize: 28,
-    fontWeight: '700' as const,
+    fontSize: 32,
+    fontWeight: '800' as const,
     color: '#FFFFFF',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#FFFFFF',
-    opacity: 0.9,
+    opacity: 0.95,
     textAlign: 'center' as const,
+    fontWeight: '600' as const,
   },
   revenueCard: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    overflow: 'hidden' as const,
+    marginHorizontal: 20,
     marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  revenueHeader: {
+  revenueGradient: {
+    padding: 24,
+  },
+  revenueContent: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+  },
+  revenueLeft: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 16,
-  },
-  revenueTextContainer: {
     flex: 1,
   },
+  revenueIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(67, 233, 123, 0.15)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
   revenueLabel: {
-    fontSize: 14,
-    color: Colors.light.muted,
-    marginBottom: 4,
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: 6,
+    fontWeight: '500' as const,
   },
   revenueValue: {
-    fontSize: 32,
-    fontWeight: '700' as const,
-    color: Colors.light.success,
+    fontSize: 28,
+    fontWeight: '800' as const,
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  revenueSubtext: {
+    fontSize: 12,
+    color: '#43e97b',
+    fontWeight: '600' as const,
+  },
+  revenueArrow: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   section: {
-    marginBottom: 24,
+    paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: 'row' as const,
@@ -501,111 +673,175 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600' as const,
-    color: Colors.light.text,
+    fontWeight: '700' as const,
+    color: '#1a1a1a',
+    marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: Colors.light.muted,
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500' as const,
   },
-  seeAllText: {
+  viewAllButton: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+  },
+  viewAllText: {
     fontSize: 14,
     color: Colors.light.primary,
     fontWeight: '600' as const,
   },
   emptyState: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 16,
-    padding: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 48,
     alignItems: 'center' as const,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
-    color: Colors.light.muted,
-    marginTop: 16,
-    marginBottom: 20,
+    fontSize: 18,
+    color: '#1a1a1a',
+    fontWeight: '600' as const,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 24,
   },
   addButton: {
     backgroundColor: Colors.light.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
     borderRadius: 12,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: 15,
+    fontWeight: '700' as const,
   },
   deliveryCard: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  deliveryHeader: {
+  deliveryCardTop: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
-    alignItems: 'flex-start' as const,
-    marginBottom: 12,
+    alignItems: 'center' as const,
+  },
+  deliveryCardLeft: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    flex: 1,
+  },
+  deliveryStatusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  statusDotPending: {
+    backgroundColor: '#f59e0b',
+  },
+  statusDotInTransit: {
+    backgroundColor: '#3b82f6',
+  },
+  statusDotDelivered: {
+    backgroundColor: '#10b981',
   },
   deliveryInfo: {
     flex: 1,
   },
   deliveryName: {
     fontSize: 16,
-    fontWeight: '600' as const,
-    color: Colors.light.text,
+    fontWeight: '700' as const,
+    color: '#1a1a1a',
     marginBottom: 4,
   },
+  deliveryMeta: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 4,
+  },
   deliveryZone: {
-    fontSize: 13,
-    color: Colors.light.muted,
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500' as const,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
   },
   statusPending: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#fef3c7',
   },
   statusInTransit: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#dbeafe',
   },
   statusDelivered: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#d1fae5',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: Colors.light.text,
+    fontSize: 11,
+    fontWeight: '700' as const,
+  },
+  statusTextPending: {
+    color: '#b45309',
+  },
+  statusTextInTransit: {
+    color: '#1e40af',
+  },
+  statusTextDelivered: {
+    color: '#065f46',
+  },
+  deliveryDivider: {
+    height: 1,
+    backgroundColor: '#f3f4f6',
+    marginVertical: 12,
   },
   deliveryFooter: {
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
+  },
+  deliveryMessengerInfo: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
   },
   deliveryMessenger: {
     fontSize: 13,
-    color: Colors.light.muted,
+    color: '#6b7280',
+    fontWeight: '500' as const,
   },
   deliveryTotal: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: Colors.light.primary,
+    fontSize: 17,
+    fontWeight: '800' as const,
+    color: '#667eea',
+  },
+  messengerContentContainer: {
+    padding: 16,
   },
   emptyMessengerContainer: {
     flex: 1,
