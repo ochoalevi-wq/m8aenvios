@@ -296,7 +296,7 @@ export default function DashboardScreen() {
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.greeting}>Hola 👋</Text>
-            <Text style={styles.headerTitle}>{companyName || ''}</Text>
+            <Text style={styles.headerTitle}>{companyName || 'Dashboard'}</Text>
           </View>
           <TouchableOpacity style={styles.headerIconButton}>
             <Activity color="#FFFFFF" size={24} />
