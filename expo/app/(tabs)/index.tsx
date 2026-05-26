@@ -8,6 +8,20 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// ── Grayscale palette ──────────────────────────────────────────────────────
+const G = {
+  900: '#111827',
+  800: '#1f2937',
+  700: '#374151',
+  600: '#4b5563',
+  500: '#6b7280',
+  400: '#9ca3af',
+  300: '#d1d5db',
+  200: '#e5e7eb',
+  100: '#f3f4f6',
+  50:  '#f9fafb',
+};
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, companyName } = useAuth();
@@ -49,7 +63,7 @@ export default function DashboardScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.light.primary} />
+        <ActivityIndicator size="large" color={G[600]} />
       </View>
     );
   }
@@ -75,7 +89,7 @@ export default function DashboardScreen() {
     if (myDeliveries.length === 0) {
       return (
         <View style={styles.emptyMessengerContainer}>
-          <Truck color={Colors.light.muted} size={64} />
+          <Truck color={G[400]} size={64} />
           <Text style={styles.emptyMessengerText}>No tienes paquetes asignados</Text>
           <Text style={styles.emptyMessengerSubtext}>
             Tus entregas aparecerán aquí cuando te sean asignadas
@@ -103,15 +117,15 @@ export default function DashboardScreen() {
               <Text style={styles.messengerStatLabel}>Total</Text>
             </View>
             <View style={styles.messengerStatCard}>
-              <Text style={[styles.messengerStatValue, { color: Colors.light.warning }]}>{myStats.pending}</Text>
+              <Text style={[styles.messengerStatValue, { color: G[300] }]}>{myStats.pending}</Text>
               <Text style={styles.messengerStatLabel}>Pendientes</Text>
             </View>
             <View style={styles.messengerStatCard}>
-              <Text style={[styles.messengerStatValue, { color: Colors.light.secondary }]}>{myStats.inTransit}</Text>
+              <Text style={[styles.messengerStatValue, { color: G[300] }]}>{myStats.inTransit}</Text>
               <Text style={styles.messengerStatLabel}>En Tránsito</Text>
             </View>
             <View style={styles.messengerStatCard}>
-              <Text style={[styles.messengerStatValue, { color: '#10B981' }]}>{myStats.delivered}</Text>
+              <Text style={[styles.messengerStatValue, { color: G[300] }]}>{myStats.delivered}</Text>
               <Text style={styles.messengerStatLabel}>Entregados</Text>
             </View>
           </View>
@@ -158,16 +172,16 @@ export default function DashboardScreen() {
                     </Text>
                   </View>
                   {isExpanded ? (
-                    <ChevronUp color={Colors.light.muted} size={20} />
+                    <ChevronUp color={G[400]} size={20} />
                   ) : (
-                    <ChevronDown color={Colors.light.muted} size={20} />
+                    <ChevronDown color={G[400]} size={20} />
                   )}
                 </View>
               </TouchableOpacity>
 
               <View style={styles.deliveryCardQuickInfo}>
                 <View style={styles.deliveryCardQuickInfoItem}>
-                  <MapPin color={Colors.light.muted} size={16} />
+                  <MapPin color={G[400]} size={16} />
                   <Text style={styles.deliveryCardQuickInfoText}>{delivery.zone.replace('_', ' ').toUpperCase()}</Text>
                 </View>
                 <View style={styles.deliveryCardQuickInfoItem}>
@@ -182,11 +196,11 @@ export default function DashboardScreen() {
                   <View style={styles.deliveryDetailSection}>
                     <Text style={styles.deliveryDetailSectionTitle}>Remitente</Text>
                     <View style={styles.deliveryDetailRow}>
-                      <UserIcon color={Colors.light.muted} size={16} />
+                      <UserIcon color={G[400]} size={16} />
                       <Text style={styles.deliveryDetailText}>{delivery.sender.name}</Text>
                     </View>
                     <View style={styles.deliveryDetailRow}>
-                      <Phone color={Colors.light.muted} size={16} />
+                      <Phone color={G[400]} size={16} />
                       <Text style={styles.deliveryDetailText}>{delivery.sender.phone}</Text>
                       <TouchableOpacity
                         style={styles.callButton}
@@ -196,7 +210,7 @@ export default function DashboardScreen() {
                       </TouchableOpacity>
                     </View>
                     <View style={styles.deliveryDetailRow}>
-                      <MapPin color={Colors.light.muted} size={16} />
+                      <MapPin color={G[400]} size={16} />
                       <Text style={[styles.deliveryDetailText, { flex: 1 }]}>{delivery.sender.address}</Text>
                     </View>
                   </View>
@@ -204,11 +218,11 @@ export default function DashboardScreen() {
                   <View style={styles.deliveryDetailSection}>
                     <Text style={styles.deliveryDetailSectionTitle}>Destinatario</Text>
                     <View style={styles.deliveryDetailRow}>
-                      <UserIcon color={Colors.light.muted} size={16} />
+                      <UserIcon color={G[400]} size={16} />
                       <Text style={styles.deliveryDetailText}>{delivery.receiver.name}</Text>
                     </View>
                     <View style={styles.deliveryDetailRow}>
-                      <Phone color={Colors.light.muted} size={16} />
+                      <Phone color={G[400]} size={16} />
                       <Text style={styles.deliveryDetailText}>{delivery.receiver.phone}</Text>
                       <View style={styles.contactButtons}>
                         <TouchableOpacity
@@ -226,7 +240,7 @@ export default function DashboardScreen() {
                       </View>
                     </View>
                     <View style={styles.deliveryDetailRow}>
-                      <MapPin color={Colors.light.muted} size={16} />
+                      <MapPin color={G[400]} size={16} />
                       <Text style={[styles.deliveryDetailText, { flex: 1 }]}>{delivery.receiver.address}</Text>
                     </View>
                   </View>
@@ -288,7 +302,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={[G[700], G[800]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.headerGradient}
@@ -320,7 +334,7 @@ export default function DashboardScreen() {
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, styles.primaryCard]}>
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={[G[600], G[700]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statGradient}
@@ -335,7 +349,7 @@ export default function DashboardScreen() {
 
             <View style={[styles.statCard, styles.warningCard]}>
               <LinearGradient
-                colors={['#f093fb', '#f5576c']}
+                colors={[G[400], G[500]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statGradient}
@@ -350,7 +364,7 @@ export default function DashboardScreen() {
 
             <View style={[styles.statCard, styles.infoCard]}>
               <LinearGradient
-                colors={['#4facfe', '#00f2fe']}
+                colors={[G[500], G[600]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statGradient}
@@ -365,7 +379,7 @@ export default function DashboardScreen() {
 
             <View style={[styles.statCard, styles.successCard]}>
               <LinearGradient
-                colors={['#43e97b', '#38f9d7']}
+                colors={[G[700], G[800]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.statGradient}
@@ -382,7 +396,7 @@ export default function DashboardScreen() {
 
         <TouchableOpacity style={styles.revenueCard} activeOpacity={0.9}>
           <LinearGradient
-            colors={['#1a1a2e', '#16213e']}
+            colors={[G[800], G[900]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.revenueGradient}
@@ -390,7 +404,7 @@ export default function DashboardScreen() {
             <View style={styles.revenueContent}>
               <View style={styles.revenueLeft}>
                 <View style={styles.revenueIconContainer}>
-                  <TrendingUp color="#43e97b" size={24} />
+                  <TrendingUp color={G[300]} size={24} />
                 </View>
                 <View>
                   <Text style={styles.revenueLabel}>Ingresos Totales</Text>
@@ -416,14 +430,14 @@ export default function DashboardScreen() {
               onPress={() => router.push('/deliveries')}
             >
               <Text style={styles.viewAllText}>Ver todos</Text>
-              <ArrowRight color={Colors.light.primary} size={16} />
+              <ArrowRight color={G[600]} size={16} />
             </TouchableOpacity>
           </View>
 
           {recentDeliveries.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.emptyIconCircle}>
-                <Package color={Colors.light.primary} size={32} />
+                <Package color={G[600]} size={32} />
               </View>
               <Text style={styles.emptyText}>No hay envíos registrados</Text>
               <Text style={styles.emptySubtext}>Comienza creando tu primer envío</Text>
@@ -454,7 +468,7 @@ export default function DashboardScreen() {
                     <View style={styles.deliveryInfo}>
                       <Text style={styles.deliveryName}>{delivery.receiver.name}</Text>
                       <View style={styles.deliveryMeta}>
-                        <MapPin color={Colors.light.muted} size={12} />
+                        <MapPin color={G[400]} size={12} />
                         <Text style={styles.deliveryZone}>{delivery.zone.replace('_', ' ').toUpperCase()}</Text>
                       </View>
                     </View>
@@ -476,7 +490,7 @@ export default function DashboardScreen() {
                 <View style={styles.deliveryDivider} />
                 <View style={styles.deliveryFooter}>
                   <View style={styles.deliveryMessengerInfo}>
-                    <Truck color={Colors.light.muted} size={14} />
+                    <Truck color={G[400]} size={14} />
                     <Text style={styles.deliveryMessenger}>{delivery.messenger}</Text>
                   </View>
                   <Text style={styles.deliveryTotal}>Q {(delivery.packageCost + delivery.shippingCost).toFixed(2)}</Text>
@@ -493,7 +507,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f3f4f6',
   },
   headerGradient: {
     paddingTop: 60,
@@ -519,7 +533,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -543,18 +557,18 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
+    color: '#111827',
   },
   statsLink: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#667eea',
+    color: '#4b5563',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f3f4f6',
   },
   statsGrid: {
     flexDirection: 'row' as const,
@@ -633,7 +647,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16,
-    backgroundColor: 'rgba(67, 233, 123, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -651,7 +665,7 @@ const styles = StyleSheet.create({
   },
   revenueSubtext: {
     fontSize: 12,
-    color: '#43e97b',
+    color: '#9ca3af',
     fontWeight: '600' as const,
   },
   revenueArrow: {
@@ -674,7 +688,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
+    color: '#111827',
     marginBottom: 4,
   },
   sectionSubtitle: {
@@ -689,7 +703,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    color: Colors.light.primary,
+    color: '#4b5563',
     fontWeight: '600' as const,
   },
   emptyState: {
@@ -707,14 +721,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#e5e7eb',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 18,
-    color: '#1a1a1a',
+    color: '#111827',
     fontWeight: '600' as const,
     marginBottom: 8,
   },
@@ -724,7 +738,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   addButton: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#374151',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 12,
@@ -761,13 +775,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   statusDotPending: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#9ca3af',
   },
   statusDotInTransit: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#6b7280',
   },
   statusDotDelivered: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#374151',
   },
   deliveryInfo: {
     flex: 1,
@@ -775,7 +789,7 @@ const styles = StyleSheet.create({
   deliveryName: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: '#1a1a1a',
+    color: '#111827',
     marginBottom: 4,
   },
   deliveryMeta: {
@@ -794,26 +808,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statusPending: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: '#e5e7eb',
   },
   statusInTransit: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: '#d1d5db',
   },
   statusDelivered: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#9ca3af',
   },
   statusText: {
     fontSize: 11,
     fontWeight: '700' as const,
   },
   statusTextPending: {
-    color: '#b45309',
+    color: '#4b5563',
   },
   statusTextInTransit: {
-    color: '#1e40af',
+    color: '#374151',
   },
   statusTextDelivered: {
-    color: '#065f46',
+    color: '#1f2937',
   },
   deliveryDivider: {
     height: 1,
@@ -838,7 +852,7 @@ const styles = StyleSheet.create({
   deliveryTotal: {
     fontSize: 17,
     fontWeight: '800' as const,
-    color: '#667eea',
+    color: '#374151',
   },
   messengerContentContainer: {
     padding: 16,
@@ -864,7 +878,7 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
   },
   messengerWelcomeCard: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#374151',
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
@@ -884,7 +898,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
   },
@@ -907,7 +921,7 @@ const styles = StyleSheet.create({
   },
   messengerStatCard: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center' as const,
@@ -941,13 +955,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusIndicatorPending: {
-    backgroundColor: Colors.light.warning,
+    backgroundColor: '#9ca3af',
   },
   statusIndicatorInTransit: {
-    backgroundColor: Colors.light.secondary,
+    backgroundColor: '#6b7280',
   },
   statusIndicatorDelivered: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#374151',
   },
   deliveryCardInfo: {
     flex: 1,
@@ -955,13 +969,13 @@ const styles = StyleSheet.create({
   deliveryCardId: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.light.muted,
+    color: '#6b7280',
     marginBottom: 4,
   },
   deliveryCardReceiver: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.light.text,
+    color: '#111827',
   },
   deliveryCardHeaderRight: {
     alignItems: 'flex-end' as const,
@@ -975,7 +989,7 @@ const styles = StyleSheet.create({
   deliveryCardStatusText: {
     fontSize: 11,
     fontWeight: '700' as const,
-    color: Colors.light.text,
+    color: '#111827',
   },
   deliveryCardQuickInfo: {
     flexDirection: 'row' as const,
@@ -983,7 +997,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
+    borderTopColor: '#e5e7eb',
   },
   deliveryCardQuickInfoItem: {
     flexDirection: 'row' as const,
@@ -992,18 +1006,18 @@ const styles = StyleSheet.create({
   },
   deliveryCardQuickInfoText: {
     fontSize: 14,
-    color: Colors.light.muted,
+    color: '#6b7280',
   },
   deliveryCardTotal: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.light.primary,
+    color: '#374151',
   },
   deliveryCardDetails: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
+    borderTopColor: '#e5e7eb',
     gap: 16,
   },
   deliveryDetailSection: {
@@ -1012,7 +1026,7 @@ const styles = StyleSheet.create({
   deliveryDetailSectionTitle: {
     fontSize: 14,
     fontWeight: '700' as const,
-    color: Colors.light.text,
+    color: '#111827',
     marginBottom: 4,
   },
   deliveryDetailRow: {
@@ -1022,34 +1036,34 @@ const styles = StyleSheet.create({
   },
   deliveryDetailText: {
     fontSize: 14,
-    color: Colors.light.text,
+    color: '#111827',
   },
   deliveryDetailLabel: {
     fontSize: 14,
-    color: Colors.light.muted,
+    color: '#6b7280',
     flex: 1,
   },
   deliveryDetailValue: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.light.text,
+    color: '#111827',
   },
   deliveryDetailRowTotal: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: Colors.light.border,
+    borderTopColor: '#e5e7eb',
   },
   deliveryDetailLabelTotal: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.light.text,
+    color: '#111827',
     flex: 1,
   },
   deliveryDetailValueTotal: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.light.primary,
+    color: '#374151',
   },
   contactButtons: {
     flexDirection: 'row' as const,
@@ -1057,7 +1071,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto' as const,
   },
   callButton: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#374151',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1068,7 +1082,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   whatsappButton: {
-    backgroundColor: '#25D366',
+    backgroundColor: '#6b7280',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1088,10 +1102,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   actionButtonPrimary: {
-    backgroundColor: Colors.light.secondary,
+    backgroundColor: '#4b5563',
   },
   actionButtonSuccess: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#374151',
   },
   actionButtonText: {
     fontSize: 16,
