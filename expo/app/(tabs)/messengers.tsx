@@ -34,12 +34,15 @@ import {
   Linking,
   Alert,
   Platform,
-  Image
+  Image,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView
 } from 'react-native';
 
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-
+import type { LicenseType, VehicleType } from '@/contexts/AuthContext';
 
 
 interface MessengerStats {
@@ -78,8 +81,16 @@ export default function MessengersScreen() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
 
+  const { addCredential } = useAuth();
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
+
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [newName, setNewName] = useState<string>('');
+  const [newPhone, setNewPhone] = useState<string>('');
+  const [newLicense, setNewLicense] = useState<LicenseType | null>(null);
+  const [newVehicle, setNewVehicle] = useState<VehicleType | null>(null);
+  const [isAdding, setIsAdding] = useState<boolean>(false);
 
 
 
@@ -145,6 +156,65 @@ export default function MessengersScreen() {
       .filter((d) => d.messengerId === messengerId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
+  };
+
+  const handleAddMessenger = async () => {
+    const nameTrimmed = newName.trim();
+    if (!nameTrimmed) {
+      Alert.alert('Error', 'El nombre completo es obligatorio');
+      return;
+    }
+    if (!newPhone.trim()) {
+      Alert.alert('Error', 'El número de teléfono es obligatorio');
+      return;
+    }
+    if (!newLicense) {
+      Alert.alert('Error', 'Selecciona un tipo de licencia');
+      return;
+    }
+    if (!newVehicle) {
+      Alert.alert('Error', 'Selecciona un tipo de vehículo');
+      return;
+    }
+
+    const nameParts = nameTrimmed.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || 'Mensajero';
+    const username = firstName.toLowerCase() + lastName.charAt(0).toLowerCase();
+    const password = '123456';
+
+    setIsAdding(true);
+    try {
+      await addCredential(
+        username,
+        password,
+        'messenger',
+        firstName,
+        lastName,
+        newPhone.trim(),
+        undefined,
+        newLicense,
+        newVehicle
+      );
+      setShowAddModal(false);
+      setNewName('');
+      setNewPhone('');
+      setNewLicense(null);
+      setNewVehicle(null);
+      Alert.alert('Éxito', `Mensajero "${nameTrimmed}" añadido correctamente`);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo añadir al mensajero');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const resetForm = () => {
+    setNewName('');
+    setNewPhone('');
+    setNewLicense(null);
+    setNewVehicle(null);
+    setShowAddModal(false);
   };
 
   if (isLoading) {
@@ -645,6 +715,7 @@ export default function MessengersScreen() {
   }
 
   return (
+    <>
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {topPerformer && (
         <View style={styles.topPerformerCard}>
@@ -679,7 +750,7 @@ export default function MessengersScreen() {
         </View>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/register?role=messenger')}
+          onPress={() => setShowAddModal(true)}
           activeOpacity={0.7}
         >
           <UserPlus color="#FFFFFF" size={20} />
@@ -848,6 +919,170 @@ export default function MessengersScreen() {
         );
       })}
     </ScrollView>
+
+    <Modal
+      visible={showAddModal}
+      animationType="slide"
+      transparent
+      onRequestClose={resetForm}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.modalOverlay}
+      >
+        <View style={styles.modalContent}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <View style={styles.modalIconContainer}>
+                  <UserPlus color={Colors.light.primary} size={28} />
+                </View>
+                <View style={styles.modalTitleInfo}>
+                  <Text style={styles.modalTitle}>Añadir Mensajero</Text>
+                  <Text style={styles.modalSubtitle}>Completa los datos del nuevo mensajero</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={resetForm}
+              >
+                <XCircle color={Colors.light.muted} size={28} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalForm}>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Nombre Completo</Text>
+                <View style={styles.formInputContainer}>
+                  <UserIcon color={Colors.light.muted} size={20} style={styles.formInputIcon} />
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="Ej: Juan Pérez"
+                    placeholderTextColor={Colors.light.muted}
+                    value={newName}
+                    onChangeText={setNewName}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Número de Teléfono</Text>
+                <View style={styles.formInputContainer}>
+                  <Phone color={Colors.light.muted} size={20} style={styles.formInputIcon} />
+                  <Text style={styles.phonePrefix}>+502</Text>
+                  <TextInput
+                    style={[styles.formInput, { flex: 1 }]}
+                    placeholder="12345678"
+                    placeholderTextColor={Colors.light.muted}
+                    value={newPhone}
+                    onChangeText={setNewPhone}
+                    keyboardType="phone-pad"
+                    maxLength={8}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Tipo de Licencia</Text>
+                <View style={styles.chipRow}>
+                  {(Object.entries(LICENSE_LABELS) as [LicenseType, string][]).map(([key, label]) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.chip,
+                        newLicense === key && styles.chipSelected,
+                      ]}
+                      onPress={() => setNewLicense(key)}
+                      activeOpacity={0.7}
+                    >
+                      <CreditCard
+                        color={newLicense === key ? '#FFFFFF' : Colors.light.primary}
+                        size={16}
+                      />
+                      <Text
+                        style={[
+                          styles.chipText,
+                          newLicense === key && styles.chipTextSelected,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Vehículo</Text>
+                <View style={styles.chipRow}>
+                  {(Object.entries(VEHICLE_LABELS) as [VehicleType, string][]).map(([key, label]) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.chip,
+                        newVehicle === key && styles.chipSelected,
+                      ]}
+                      onPress={() => setNewVehicle(key)}
+                      activeOpacity={0.7}
+                    >
+                      <Car
+                        color={newVehicle === key ? '#FFFFFF' : Colors.light.primary}
+                        size={16}
+                      />
+                      <Text
+                        style={[
+                          styles.chipText,
+                          newVehicle === key && styles.chipTextSelected,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={resetForm}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  isAdding && styles.saveButtonDisabled,
+                ]}
+                onPress={handleAddMessenger}
+                disabled={isAdding}
+                activeOpacity={0.7}
+              >
+                {isAdding ? (
+                  <>
+                    <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} />
+                    <Text style={styles.saveButtonText}>Guardando...</Text>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus color="#FFFFFF" size={20} />
+                    <Text style={styles.saveButtonText}>Guardar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+    </>
   );
 }
 
@@ -1548,5 +1783,164 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderLeftWidth: 4,
     borderLeftColor: '#F59E0B',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end' as const,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '90%',
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'flex-start' as const,
+    padding: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.light.border,
+  },
+  modalTitleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 16,
+    flex: 1,
+  },
+  modalIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: `${Colors.light.primary}15`,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  modalTitleInfo: {
+    flex: 1,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Colors.light.muted,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.light.background,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  modalForm: {
+    padding: 24,
+    gap: 20,
+  },
+  formGroup: {
+    gap: 8,
+  },
+  formLabel: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+  },
+  formInputContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.light.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    paddingHorizontal: 16,
+  },
+  formInputIcon: {
+    marginRight: 12,
+  },
+  phonePrefix: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.light.muted,
+    marginRight: 8,
+  },
+  formInput: {
+    flex: 1,
+    height: 52,
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  chipRow: {
+    flexDirection: 'row' as const,
+    flexWrap: 'wrap' as const,
+    gap: 10,
+  },
+  chip: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.light.background,
+    borderWidth: 1.5,
+    borderColor: Colors.light.border,
+  },
+  chipSelected: {
+    backgroundColor: Colors.light.primary,
+    borderColor: Colors.light.primary,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+  },
+  chipTextSelected: {
+    color: '#FFFFFF',
+  },
+  modalActions: {
+    flexDirection: 'row' as const,
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  cancelButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: Colors.light.background,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  saveButton: {
+    flex: 2,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: Colors.light.primary,
+    flexDirection: 'row' as const,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
 });
