@@ -38,6 +38,21 @@ export default function DeliveriesScreen() {
       return;
     }
 
+    if (isMessenger && (!delivery.photos || delivery.photos.length === 0)) {
+      Alert.alert(
+        'Foto Requerida',
+        'Debes tomar una foto del paquete antes de marcarlo como entregado. Ve a la pestaña Mensajeros para tomar la foto.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Ir a Mensajeros',
+            onPress: () => router.push('/(tabs)/messengers'),
+          },
+        ]
+      );
+      return;
+    }
+
     Alert.alert(
       'Confirmar Entrega',
       `¿Marcar el envío #${delivery.id.slice(-6)} como entregado?`,

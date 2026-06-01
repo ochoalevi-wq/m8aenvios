@@ -37,7 +37,8 @@ import {
   Image,
   Modal,
   TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Share
 } from 'react-native';
 
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -71,7 +72,7 @@ const LICENSE_LABELS: Record<string, string> = {
 
 export default function MessengersScreen() {
   const { deliveries, isLoading, updateStatus, updateDelivery } = useDeliveries();
-  const { user, credentials } = useAuth();
+  const { user, credentials, whatsappNumber } = useAuth();
   const router = useRouter();
   const [expandedMessenger, setExpandedMessenger] = useState<string | null>(null);
   const [expandedDelivery, setExpandedDelivery] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export default function MessengersScreen() {
   const isMessenger = user?.role === 'messenger';
   const messengerName = user?.name || '';
 
+  const [pendingDeliveredId, setPendingDeliveredId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>('');
   const [newPhone, setNewPhone] = useState<string>('');
@@ -307,7 +309,12 @@ export default function MessengersScreen() {
                   await updateDelivery(deliveryId, {
                     photos: [...photos, result.assets[0].uri],
                   });
-                  Alert.alert('Éxito', 'Foto agregada correctamente');
+
+                  if (pendingDeliveredId === deliveryId) {
+                    await shareAndDeliver(deliveryId);
+                  } else {
+                    Alert.alert('Éxito', 'Foto agregada correctamente');
+                  }
                 }
               }
             },
@@ -336,7 +343,12 @@ export default function MessengersScreen() {
               });
               setShowCamera(false);
               setCurrentDeliveryId(null);
-              Alert.alert('Éxito', 'Foto tomada y guardada correctamente');
+
+              if (pendingDeliveredId === currentDeliveryId) {
+                await shareAndDeliver(currentDeliveryId);
+              } else {
+                Alert.alert('Éxito', 'Foto tomada y guardada correctamente');
+              }
             }
           }
         } catch (error) {
@@ -346,7 +358,72 @@ export default function MessengersScreen() {
       }
     };
 
+    const shareAndDeliver = async (deliveryId: string) => {
+      const delivery = myDeliveries.find(d => d.id === deliveryId);
+      if (!delivery?.photos?.length) {
+        await updateStatus(deliveryId, 'delivered');
+        setPendingDeliveredId(null);
+        return;
+      }
+
+      const lastPhoto = delivery.photos[delivery.photos.length - 1];
+
+      Alert.alert(
+        'Enviar Foto',
+        '¿Deseas enviar la foto al administrador por WhatsApp?',
+        [
+          {
+            text: 'Omitir',
+            style: 'cancel',
+            onPress: async () => {
+              await updateStatus(deliveryId, 'delivered');
+              setPendingDeliveredId(null);
+              Alert.alert('Éxito', 'Entrega marcada como completada.');
+            },
+          },
+          {
+            text: 'Enviar',
+            onPress: async () => {
+              try {
+                await Share.share({
+                  message: `📦 Foto de entrega #${deliveryId.slice(-6)} - ${delivery?.receiver?.name || ''}`,
+                  url: Platform.OS === 'ios' ? lastPhoto : undefined,
+                });
+              } catch (e) {
+                console.log('Share cancelled:', e);
+              }
+              await updateStatus(deliveryId, 'delivered');
+              setPendingDeliveredId(null);
+              Alert.alert('Éxito', 'Foto enviada y entrega marcada como completada.');
+            },
+          },
+        ]
+      );
+    };
+
     const handleStatusChange = async (deliveryId: string, newStatus: 'in_transit' | 'delivered') => {
+      if (newStatus === 'delivered') {
+        const delivery = myDeliveries.find(d => d.id === deliveryId);
+        if (!delivery?.photos || delivery.photos.length === 0) {
+          Alert.alert(
+            'Foto Requerida',
+            'Debes tomar una foto del paquete antes de marcarlo como entregado. La foto se enviará al administrador.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              {
+                text: 'Tomar Foto',
+                onPress: () => {
+                  setPendingDeliveredId(deliveryId);
+                  handleTakePhoto(deliveryId);
+                },
+              },
+            ]
+          );
+          return;
+        }
+        await shareAndDeliver(deliveryId);
+        return;
+      }
       await updateStatus(deliveryId, newStatus);
     };
 
