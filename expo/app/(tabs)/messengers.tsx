@@ -305,9 +305,9 @@ export default function MessengersScreen() {
     };
 
     const handleNotDelivered = (deliveryId: string) => {
-      Alert.prompt(
+      Alert.alert(
         'No Entregado',
-        'Por favor, indica el motivo por el cual no se pudo entregar el paquete:',
+        '¿Confirmas que no se pudo entregar este paquete?',
         [
           {
             text: 'Cancelar',
@@ -315,20 +315,15 @@ export default function MessengersScreen() {
           },
           {
             text: 'Confirmar',
-            onPress: async (reason?: string) => {
-              if (!reason || reason.trim() === '') {
-                Alert.alert('Error', 'Debes proporcionar un motivo');
-                return;
-              }
+            onPress: async () => {
               await updateDelivery(deliveryId, {
                 status: 'not_delivered',
-                notDeliveredReason: reason,
+                notDeliveredReason: 'No especificado',
               });
               Alert.alert('Éxito', 'El estado del paquete ha sido actualizado');
             },
           },
-        ],
-        'plain-text'
+        ]
       );
     };
 
@@ -339,26 +334,25 @@ export default function MessengersScreen() {
             style={styles.camera}
             facing="back"
             ref={(ref) => setCameraRef(ref)}
-          >
-            <View style={styles.cameraControls}>
-              <TouchableOpacity
-                style={styles.cameraCancelButton}
-                onPress={() => {
-                  setShowCamera(false);
-                  setCurrentDeliveryId(null);
-                }}
-              >
-                <Text style={styles.cameraCancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cameraButton}
-                onPress={takePicture}
-              >
-                <View style={styles.cameraButtonInner} />
-              </TouchableOpacity>
-              <View style={styles.cameraPlaceholder} />
-            </View>
-          </CameraView>
+          />
+          <View style={styles.cameraControls}>
+            <TouchableOpacity
+              style={styles.cameraCancelButton}
+              onPress={() => {
+                setShowCamera(false);
+                setCurrentDeliveryId(null);
+              }}
+            >
+              <Text style={styles.cameraCancelButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={takePicture}
+            >
+              <View style={styles.cameraButtonInner} />
+            </TouchableOpacity>
+            <View style={styles.cameraPlaceholder} />
+          </View>
         </View>
       );
     }
