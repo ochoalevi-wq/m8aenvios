@@ -3,10 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS } from '@/types/delivery';
 import { useRouter } from 'expo-router';
-import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp, MessageCircle, ArrowRight, Activity } from 'lucide-react-native';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import { Package, TrendingUp, Clock, CheckCircle, Truck, MapPin, Phone, User as UserIcon, ChevronDown, ChevronUp, MessageCircle, ArrowRight, Activity, ImagePlus, Camera } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, Image, Alert } from 'react-native';
 import { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 
 // ── Grayscale palette ──────────────────────────────────────────────────────
 const G = {
@@ -24,8 +25,9 @@ const G = {
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user, companyName } = useAuth();
+  const { user, companyName, logo, updateLogo } = useAuth();
   const isMessenger = user?.role === 'messenger';
+  const isAdmin = user?.role === 'admin';
   const { deliveries, isLoading, updateStatus } = useDeliveries();
   const stats = useDeliveryStats();
   
@@ -83,6 +85,52 @@ export default function DashboardScreen() {
 
   const handleStatusChange = async (deliveryId: string, newStatus: 'in_transit' | 'delivered') => {
     await updateStatus(deliveryId, newStatus);
+  };
+
+  const pickLogo = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert('Permiso requerido', 'Necesitas dar permiso para acceder a tus fotos');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await updateLogo(result.assets[0].uri);
+    }
+  };
+
+  const takeLogoPhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert('Permiso requerido', 'Necesitas dar permiso para acceder a la cámara');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await updateLogo(result.assets[0].uri);
+    }
+  };
+
+  const showLogoOptions = () => {
+    Alert.alert(
+      'Cambiar Logo',
+      'Elige una opción',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Galería', onPress: pickLogo },
+        { text: 'Cámara', onPress: takeLogoPhoto },
+        ...(logo ? [{ text: 'Eliminar', style: 'destructive' as const, onPress: () => updateLogo(null) }] : []),
+      ]
+    );
   };
 
   if (isMessenger) {
@@ -308,9 +356,27 @@ export default function DashboardScreen() {
         style={styles.headerGradient}
       >
         <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.greeting}>Hola 👋</Text>
-            <Text style={styles.headerTitle}>{companyName || 'Dashboard'}</Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.logoContainer}>
+              {logo ? (
+                <Image source={{ uri: logo }} style={styles.logoImage} resizeMode="cover" />
+              ) : (
+                <Package color="#FFFFFF" size={24} />
+              )}
+              {isAdmin && (
+                <TouchableOpacity
+                  style={styles.logoEditBadge}
+                  onPress={showLogoOptions}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Camera color="#FFFFFF" size={12} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View>
+              <Text style={styles.greeting}>Hola 👋</Text>
+              <Text style={styles.headerTitle}>{companyName || 'Dashboard'}</Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.headerIconButton}>
             <Activity color="#FFFFFF" size={24} />
@@ -518,6 +584,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row' as const,
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
+  },
+  headerLeft: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 14,
+    flex: 1,
+  },
+  logoContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  logoImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+  },
+  logoEditBadge: {
+    position: 'absolute' as const,
+    bottom: -4,
+    right: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#374151',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 2,
+    borderColor: '#1f2937',
   },
   greeting: {
     fontSize: 16,
