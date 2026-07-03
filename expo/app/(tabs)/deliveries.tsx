@@ -698,7 +698,7 @@ export default function DeliveriesScreen() {
                       </View>
                     </View>
                   ) : (
-                    <>
+                    <React.Fragment>
                       <View style={styles.messengerActionsRow}>
                         <TouchableOpacity
                           style={styles.deliveredButton}
@@ -722,7 +722,7 @@ export default function DeliveriesScreen() {
                           <Text style={styles.messengerActionText}>No Entregado</Text>
                         </TouchableOpacity>
                       </View>
-                    </>
+                    </React.Fragment>
                   )
                 ) : (
                   <TouchableOpacity

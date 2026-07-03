@@ -2,7 +2,7 @@ import { useDeliveries } from '@/contexts/DeliveryContext';
 import { useAuth, type Credential } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 import { STATUS_LABELS, ZONE_LABELS } from '@/types/delivery';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   CheckCircle, 
   Clock, 
@@ -80,7 +80,7 @@ export default function MessengersScreen() {
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [currentDeliveryId, setCurrentDeliveryId] = useState<string | null>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
+  const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
 
   const { addCredential } = useAuth();
   const isMessenger = user?.role === 'messenger';
@@ -93,6 +93,12 @@ export default function MessengersScreen() {
   const [newLicense, setNewLicense] = useState<LicenseType | null>(null);
   const [newVehicle, setNewVehicle] = useState<VehicleType | null>(null);
   const [isAdding, setIsAdding] = useState<boolean>(false);
+
+
+
+
+
+
 
   const messengerCredentials = useMemo(() => {
     return credentials.filter(c => c.role === 'messenger');
@@ -322,9 +328,9 @@ export default function MessengersScreen() {
     };
 
     const takePicture = async () => {
-      if (cameraRef.current && currentDeliveryId) {
+      if (cameraRef && currentDeliveryId) {
         try {
-          const photo = await cameraRef.current.takePictureAsync({
+          const photo = await cameraRef.takePictureAsync({
             quality: 0.8,
           });
 
@@ -474,7 +480,7 @@ export default function MessengersScreen() {
           <CameraView
             style={styles.camera}
             facing="back"
-            ref={cameraRef}
+            ref={(ref) => setCameraRef(ref)}
           />
           <View style={styles.cameraControls}>
             <TouchableOpacity
